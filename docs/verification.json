@@ -1,21 +1,25 @@
 {
-  "status": "released_0.1.0_enabled_comparison",
+  "status": "released_0.1.1_enabled_comparison",
   "date": "2026-11-10",
-  "tests_passed": 180,
+  "tests_passed": 199,
   "related_suites": {
     "netease_browser": 226,
     "memory_branches": 34,
     "intent_bridge_including_command_tests": 345
   },
-  "total_tests_passed": 785,
+  "total_tests_passed": 804,
   "environment": "isolated /tmp source copies in existing AstrBot container, Python 3.12; outbound model/platform writes mocked",
   "main_import": "passed",
   "python_compile": "passed (workspace-safe cache prefix)",
   "ui_javascript_syntax": "passed",
   "ui_fixture_checks": [
-    "account edit and save",
-    "Bili source pools/follow UID/share delivery save",
-    "schedule time adjustment (earlier checkpoint)"
+    "fixed sidebar and persistent top tabs while content scrolls",
+    "overview platform/login cards, real activity progress table and global settings",
+    "changed-field global save with per-phase model merging",
+    "platform landing schedule and second-level configuration tabs",
+    "account browse draft retained across platform switching and saved",
+    "schedule adjustment saved",
+    "logs opened only in dedicated inner dialog"
   ],
   "platform_network_tests": true,
   "live_deployment": true,
@@ -41,5 +45,12 @@
   },
   "runtime_enabled": true,
   "live_activation_verified": true,
-  "music_takeover_verified": true
+  "music_takeover_verified": true,
+  "live_ui_update_checks": {
+    "configuration_preserved": true,
+    "global_save_roundtrip": "passed; no effective configuration change",
+    "account_status": "all three configured platforms ready",
+    "state_and_logs_endpoints": "passed",
+    "native_edge_visual_review": "Mac locked; interaction checks used isolated browser fixture"
+  }
 }
