@@ -32,7 +32,11 @@ class Store:
               value TEXT NOT NULL,PRIMARY KEY(provider,account,stream));
             CREATE TABLE IF NOT EXISTS memory_outbox(key TEXT PRIMARY KEY,payload TEXT NOT NULL,state TEXT NOT NULL,
               attempts INTEGER NOT NULL DEFAULT 0,next_attempt REAL NOT NULL DEFAULT 0,code TEXT NOT NULL DEFAULT '');
-            PRAGMA user_version=3;
+            CREATE TABLE IF NOT EXISTS budget_baselines(bucket TEXT NOT NULL,window TEXT NOT NULL,amount INTEGER NOT NULL,
+              PRIMARY KEY(bucket,window));
+            CREATE TABLE IF NOT EXISTS read_content(provider TEXT NOT NULL,account TEXT NOT NULL,external_id TEXT NOT NULL,at REAL NOT NULL,
+              PRIMARY KEY(provider,account,external_id));
+            PRAGMA user_version=5;
             ''')
         self.path.chmod(0o600)
 
@@ -96,10 +100,16 @@ class Store:
             if db.execute('SELECT 1 FROM actions WHERE key=?',(key,)).fetchone():return False
             for bucket,window,maximum in limits:
                 used=db.execute('SELECT COUNT(*) FROM reservations WHERE bucket=? AND window=?',(bucket,window)).fetchone()[0]
-                if used>=maximum:raise BudgetExceeded(bucket)
+                baseline=db.execute('SELECT amount FROM budget_baselines WHERE bucket=? AND window=?',(bucket,window)).fetchone()
+                if used+(baseline[0] if baseline else 0)>=maximum:raise BudgetExceeded(bucket)
             db.execute("INSERT INTO actions VALUES(?,'executing',?,?,?,?,?)",(key,provider,account,kind,now,'{}'))
             db.executemany('INSERT INTO reservations VALUES(?,?,?)',[(key,b,w) for b,w,_ in limits])
         return True
+
+    def import_budget_baseline(self,bucket,window,amount):
+        import math
+        if not isinstance(amount,(int,float)) or not math.isfinite(amount) or amount<0:raise ValueError('invalid_budget_baseline')
+        with self.connect() as db:db.execute('INSERT INTO budget_baselines VALUES(?,?,?) ON CONFLICT(bucket,window) DO UPDATE SET amount=MAX(amount,excluded.amount)',(bucket,window,math.ceil(amount)))
 
     def finish_action(self,key,receipt):
         from dataclasses import asdict
@@ -116,6 +126,9 @@ class Store:
 
     def actions(self,limit=100):
         with self.connect() as db:return [dict(r) for r in db.execute('SELECT * FROM actions ORDER BY created DESC LIMIT ?',(max(1,min(limit,500)),))]
+
+    def mark_read(self,provider,account,external_id,at):
+        with self.connect() as db:db.execute('INSERT INTO read_content VALUES(?,?,?,?) ON CONFLICT(provider,account,external_id) DO UPDATE SET at=MAX(at,excluded.at)',(provider,account,external_id,at))
 
     def observe(self,content,evaluation,hour,now):
         if not 0<=hour<24:raise ValueError('invalid_hour')
@@ -206,4 +219,6 @@ class Store:
     def observed_ids(self,provider,account,since):
         with self.connect() as db:rows=db.execute('SELECT key FROM observations WHERE provider=? AND account=? AND at>=?',(provider,account,since)).fetchall()
         prefix=f'{provider}:{account}:'
-        return [row['key'][len(prefix):] for row in rows if row['key'].startswith(prefix)]
+        values={row['key'][len(prefix):] for row in rows if row['key'].startswith(prefix)}
+        with self.connect() as db:values.update(row[0] for row in db.execute('SELECT external_id FROM read_content WHERE provider=? AND account=? AND at>=?',(provider,account,since)))
+        return sorted(values)

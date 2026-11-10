@@ -22,6 +22,7 @@ class BrowsingService:
         for content in rows:
             if self.clock()>=task['end']:break
             self.executor.policy.permit(provider.id,account,'browse')
+            self.store.mark_read(content.provider,content.account,content.external_id,self.clock())
             try:evaluation=await self.reader.evaluate(content)
             except ValueError:continue
             hour=datetime.fromtimestamp(self.clock(),ZoneInfo(self.executor.policy.config.get('timezone','Asia/Shanghai'))).hour

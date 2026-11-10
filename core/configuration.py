@@ -1,10 +1,10 @@
 """Account policy is public state; login credentials are never accepted here."""
 import math,re
 PROVIDERS={'bilibili','xiaoheihe','netease'}
-FIELDS={'dry_run','max_reply_chars','poll_mentions','poll_replies','pools','follow_uids','topic_ids','special_follow_enabled','owner_bili_name','share_delivery','enabled','owner_umo','topic_id','query','share_enabled','share_min_score','reply_enabled','private_reply_enabled',
+FIELDS={'share_gap_seconds','dry_run','max_reply_chars','poll_mentions','poll_replies','pools','follow_uids','topic_ids','special_follow_enabled','owner_bili_name','share_delivery','enabled','owner_umo','topic_id','query','share_enabled','share_min_score','reply_enabled','private_reply_enabled',
  'comment_enabled','comment_min_score','dynamic_enabled','listen_enabled','self_uid','owner_uid','whitelist_mode',
  'user_whitelist','user_blacklist','author_whitelist','author_blacklist','keyword_blacklist','poll_seconds','max_age_seconds',
- 'only_explicit_mentions','reply_to_direct_replies','daily_browse_limit','daily_share_limit','daily_reply_limit','daily_comment_limit','daily_dynamic_limit','private_scope','private_whitelist','cooldown_seconds','probability_percent','interest_filter','similar_skip','similarity_percent','always_reply_uids'}
+ 'only_explicit_mentions','reply_to_direct_replies','daily_browse_limit','daily_share_limit','daily_reply_limit','daily_comment_limit','daily_private_reply_limit','daily_dynamic_limit','private_scope','private_whitelist','cooldown_seconds','probability_percent','interest_filter','similar_skip','similarity_percent','always_reply_uids'}
 
 def number(value,low,high,integer=False):
  if type(value) not in (int,float) or not math.isfinite(value) or not low<=value<=high or (integer and int(value)!=value):raise ValueError('invalid_numeric_setting')
@@ -29,7 +29,7 @@ def account(provider,values,previous=None,*,capabilities=None):
  inherited={**previous,**previous.get('reply',{}),**previous.get('browse',{})}
  for field,kind in [('share_enabled','owner_share'),('reply_enabled','reply'),('private_reply_enabled','private_reply'),('comment_enabled','comment'),('dynamic_enabled','dynamic'),('listen_enabled','listen')]:
   if kind in previous.get('actions',{}):inherited[field]=previous['actions'][kind]
- for field,kind in [('daily_browse_limit','browse'),('daily_share_limit','owner_share'),('daily_reply_limit','reply'),('daily_comment_limit','comment'),('daily_dynamic_limit','dynamic')]:
+ for field,kind in [('daily_browse_limit','browse'),('daily_share_limit','owner_share'),('daily_reply_limit','reply'),('daily_private_reply_limit','private_reply'),('daily_comment_limit','comment'),('daily_dynamic_limit','dynamic')]:
   if kind in previous.get('daily_limits',{}):inherited[field]=previous['daily_limits'][kind]
  values={**{k:v for k,v in inherited.items() if k in FIELDS},**values}
  umo=text(values,'owner_umo')
@@ -44,12 +44,13 @@ def account(provider,values,previous=None,*,capabilities=None):
   'share_delivery':values.get('share_delivery',previous.get('share_delivery','qq_private')),
   'owner_bili_name':text(values,'owner_bili_name',80),
   'self_uid':text(values,'self_uid',80),'owner_uid':text(values,'owner_uid',80),
+  'share_gap_seconds':number(values.get('share_gap_seconds',7200),0,86400,True),
   'share_min_score':number(values.get('share_min_score',8),1,10),
   'comment_min_score':number(values.get('comment_min_score',8),1,10),
   'daily_limits':{'browse':number(values.get('daily_browse_limit',2),0,100,True),
     'owner_share':number(values.get('daily_share_limit',1),0,100,True),
     'reply':number(values.get('daily_reply_limit',20),0,1000,True),
-    'private_reply':number(values.get('daily_reply_limit',20),0,1000,True),
+    'private_reply':number(values.get('daily_private_reply_limit',20),0,1000,True),
     'comment':number(values.get('daily_comment_limit',2),0,100,True),'listen':number(values.get('daily_browse_limit',2),0,100,True),
     'dynamic':number(values.get('daily_dynamic_limit',1),0,20,True)},
   'browse':{**previous.get('browse',{}),'count':previous.get('browse',{}).get('count',2),'query':text(values,'query'),'topic_id':text(values,'topic_id',80),

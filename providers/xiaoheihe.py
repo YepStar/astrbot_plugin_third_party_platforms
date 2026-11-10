@@ -18,7 +18,8 @@ class Xiaoheihe:
             raw=self.secrets.read(self.id,account)
             if raw and raw.get('profile_id')!=account:raise ValueError('credential_account_mismatch')
             credentials=Credentials(**raw) if raw else None
-            self.clients[account]=XiaoheiheApiClient(account,credentials=credentials,max_retries=2)
+            network=self.options.get('platforms',{}).get(self.id,{}).get('accounts',{}).get(account,{}).get('network',{})
+            self.clients[account]=XiaoheiheApiClient(account,credentials=credentials,max_retries=2,**{k:network[k] for k in ['request_timeout_seconds','connect_timeout_seconds','read_timeout_seconds','min_request_interval_seconds'] if k in network})
         return self.clients[account]
     async def status(self,account):
         client=self.client(account)
@@ -49,14 +50,16 @@ class Xiaoheihe:
             return [Content(self.id,account,row['url'].rsplit('/',1)[-1],row['url'],row['title'],row.get('body_excerpt',''),str(row.get('author_id','')),'text') for row in result['items'] if row['url'].rsplit('/',1)[-1] not in options.get('_skip_ids',[])]
         page=await fetch_topic_feed(client,topic) if topic else await client.fetch_feed()
         result=[]
-        for row in page.items[:max(1,min(5,int(options.get('count',2))))]:
+        limit=max(1,min(5,int(options.get('count',2))))
+        for row in page.items[:min(15,limit*3)]:
             pid=str(row.get('link_id',row.get('post_id',row.get('id',''))))
             if not pid.isdigit() or pid in options.get('_skip_ids',[]):continue
             full=await client.fetch_thread_context(pid)
             text=clean_untrusted_text(full.body,max_chars=6000)
-            if not text:continue
+            if len(text.strip())<30:continue
             result.append(Content(self.id,account,pid,f'https://www.xiaoheihe.cn/app/bbs/link/{pid}',
                 clean_untrusted_text(full.title,max_chars=200),text,str(full.author_uid),'text'))
+            if len(result)>=limit:break
         return result
     async def search(self,account,query,limit=2):
         from .xhh_client.endpoints import EndpointName

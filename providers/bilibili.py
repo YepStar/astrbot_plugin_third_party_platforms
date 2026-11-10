@@ -34,8 +34,12 @@ class Client(BilibiliAPIMixin):
         async with plugin_http_session(self.config) as session:
             async with (session.get if method=='GET' else session.post)(url,headers=hdr,params=params,data=data,timeout=aiohttp.ClientTimeout(total=timeout),allow_redirects=False) as response:
                 if response.status!=200:raise RuntimeError(f'http_{response.status}')
-                raw=await response.content.read(2_000_001)
-                if len(raw)>2_000_000:raise ValueError('response_limit')
+                chunks=[];size=0
+                async for chunk in response.content.iter_chunked(65536):
+                    size+=len(chunk)
+                    if size>2_000_000:raise ValueError('response_limit')
+                    chunks.append(chunk)
+                raw=b''.join(chunks)
                 return json.loads(raw),response
     async def _http_get(self,url,**kwargs):return await self._request('GET',url,**kwargs)
     async def _http_post(self,url,**kwargs):return await self._request('POST',url,**kwargs) # no write retries

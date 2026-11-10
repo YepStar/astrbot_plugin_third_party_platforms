@@ -12,6 +12,7 @@ from astrbot.api.star import Star,Context,StarTools
 from astrbot.api.event import AstrMessageEvent,MessageChain,filter
 from quart import request
 from .core.daily_planner import DailyPlanner
+from .core.deployment import checks as deployment_checks
 from .core.research import public_query
 from .core.configuration import account as normalize_account
 from .core.extensions import manifest as provider_manifest,options as provider_options
@@ -41,7 +42,7 @@ class ThirdPartyPlatforms(Star):
         for provider in (Bilibili(self.secrets,config),Xiaoheihe(self.secrets,config)):self.registry.register(provider)
         self.music = Music(context)
         self.registry.register(self.music)
-        self.policy=Policy(config);self.executor=Executor(self.store,self.registry,self.policy)
+        self.policy=Policy(config,ready=lambda:self.cutover_ready());self.executor=Executor(self.store,self.registry,self.policy)
         self.memory=PublicMemoryGateway(context,lambda:config.get('memory_enabled',False),store=self.store)
         self.reader=Reader(self.generate,lambda:config.get('evaluation_rubric',''))
         self.browsing=BrowsingService(self.store,self.registry,self.executor,self.reader,self.memory,self.deliver)
@@ -66,7 +67,7 @@ class ThirdPartyPlatforms(Star):
         for provider in self.registry.providers.values():await provider.close()
 
     async def generate(self,phase,data):
-        provider_id=self.config.get('provider_id','')
+        provider_id=self.config.get('model_ids',{}).get(phase) or self.config.get('provider_id','')
         if not provider_id:raise ValueError('model_provider_unconfigured')
         data=dict(data);images=data.pop('_validated_image_urls',[]) if phase=='platform_reply' else []
         response=await asyncio.wait_for(self.context.llm_generate(chat_provider_id=provider_id,image_urls=images,
@@ -118,8 +119,7 @@ class ThirdPartyPlatforms(Star):
         await self.daily_planner.ensure(candidates)
 
     def cutover_ready(self):
-        # Removed only when native event parity, ledger migration and coexistence checks are implemented.
-        return False
+        return all(deployment_checks(self).values()) and not self.closed
 
     async def loop(self):
         await asyncio.sleep(30)
@@ -281,8 +281,8 @@ class ThirdPartyPlatforms(Star):
         # Config contains account policy only. Credentials live exclusively in SecretStore.
         return {'status':'ok','data':{'enabled':self.config.get('enabled',False),'timezone':self.config.get('timezone','Asia/Shanghai'),
             'platforms':self.config.get('platforms',{}),'tasks':self.store.tasks(time.time()-86400,time.time()+172800),
-            'actions':self.store.actions(),'memory':self.store.memory_status(),'preferences':self.store.preferences(time.time()),
-            'provider_manifests':self.registry.manifests,'cutover_ready':self.cutover_ready(),'capabilities':{key:sorted(p.capabilities) for key,p in self.registry.providers.items()}}}
+            'migration_review':{'private_messages':self.store.setting('legacy_private_review',0),'candidates':len(self.store.setting('legacy_candidate_review',[]))},'actions':self.store.actions(),'memory':self.store.memory_status(),'preferences':self.store.preferences(time.time()),
+            'deployment_checks':deployment_checks(self),'provider_manifests':self.registry.manifests,'cutover_ready':self.cutover_ready(),'capabilities':{key:sorted(p.capabilities) for key,p in self.registry.providers.items()}}}
 
     async def api_action(self):
         data=await request.get_json()
@@ -301,6 +301,10 @@ class ThirdPartyPlatforms(Star):
                         if not isinstance(payload,str) or not 1<=len(payload)<=8192:raise ValueError('invalid_qr_payload')
                         image=qrcode.make(payload);buffer=io.BytesIO();image.save(buffer,format='PNG')
                         result['qr_image']='data:image/png;base64,'+base64.b64encode(buffer.getvalue()).decode()
+                elif operation=='model_probe':
+                    checked=parse_object(await self.generate('diagnostic',{'instruction':'Return JSON only {\"ok\":true}. Connectivity check only, no tools or external actions.'}))
+                    if checked.get('ok') is not True:raise ValueError('model_probe_failed')
+                    result={'ready':True}
                 elif operation=='account_save':
                     pid,aid=data['provider'],data['account'];adapter=self.registry.get(pid);self.secrets.path(pid,aid)
                     accounts=self.config.setdefault('platforms',{}).setdefault(pid,{'enabled':True,'accounts':{}}).setdefault('accounts',{})

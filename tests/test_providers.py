@@ -61,3 +61,24 @@ def test_music_facade_delegation_and_release():
         facade.third_party_scheduler_run.assert_awaited_once_with(adapter.owner,'key')
         await adapter.close();facade.third_party_scheduler_release.assert_awaited_once_with(adapter.owner)
     asyncio.run(run())
+
+
+@pytest.mark.asyncio
+async def test_bili_http_reads_complete_chunked_utf8_and_enforces_limit(tmp_path,monkeypatch):
+ from contextlib import asynccontextmanager
+ module=importlib.import_module(package+'.providers.bilibili')
+ import json
+ raw=json.dumps({'text':'汉字'*40000},ensure_ascii=False).encode()
+ chunks=[raw[:65537],raw[65537:]]
+ class Body:
+  async def iter_chunked(self,_):
+   for chunk in chunks:yield chunk
+ @asynccontextmanager
+ async def response(*args,**kwargs):yield SimpleNamespace(status=200,content=Body())
+ @asynccontextmanager
+ async def session(*args,**kwargs):yield SimpleNamespace(get=response)
+ monkeypatch.setattr(module,'plugin_http_session',session)
+ client=module.Client({});result,_=await client._http_get('https://api.bilibili.com/test')
+ assert result['text']=='汉字'*40000
+ chunks[:]=[b'x'*1_000_000,b'x'*1_000_001]
+ with pytest.raises(ValueError,match='response_limit'):await client._http_get('https://api.bilibili.com/test')

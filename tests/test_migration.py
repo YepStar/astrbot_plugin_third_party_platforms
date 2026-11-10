@@ -76,3 +76,11 @@ def test_private_inbox_account_mismatch_does_not_commit_migration(tmp_path):
  target=tmp_path/'new'
  with pytest.raises(ValueError,match='account_mismatch'):migration.apply(source,target,source_stopped=True)
  assert not (target/'migration.json').exists()
+
+
+def test_legacy_integer_sleep_hours_and_fallback_model_are_migrated():
+ config=migration.build_config({'SLEEP_START':23,'SLEEP_END':8,'SCHEDULE_PLAN_PROVIDER_ID':'','LLM_PROVIDER_ID':'existing-model',
+  'AUTONOMOUS_PRIVATE_DAILY_MAX':10,'AUTONOMOUS_REPLY_DAILY_MAX':40}, {})
+ assert config['rest_windows']==['23:00-08:00'] and config['provider_id']=='existing-model'
+ assert config['platforms']['bilibili']['accounts']['default']['daily_limits']['private_reply']==10
+ assert config['platforms']['bilibili']['accounts']['default']['daily_limits']['reply']==40

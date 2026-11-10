@@ -4,3 +4,10 @@ __pycache__/
 *.sqlite3*
 secrets/
 .cache/
+
+*.db
+*.db-*
+legacy_backup/
+credentials/
+imported-config.json
+migration.json

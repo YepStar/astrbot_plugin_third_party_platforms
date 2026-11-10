@@ -39,6 +39,9 @@ def delivery_key(provider, external_id, kind, recipient):
 async def share(service, content, evaluation, text, item):
     if service.store.action(f'legacy_owner_share:{content.provider}:{content.account}:{content.external_id}'):
         return
+    cooldown_key=f'last_owner_share:{content.provider}:{content.account}'
+    last=service.store.setting(cooldown_key,0)
+    if last and service.clock()-last<int(item.get('share_gap_seconds',0)):return
     selected = routes(content.provider, item)
     if not selected:
         return
@@ -80,6 +83,7 @@ async def share(service, content, evaluation, text, item):
             except Exception as exc:
                 result = Receipt('unknown', code=type(exc).__name__)
             service.store.finish_action(key, result)
+            if result.state in {'succeeded','unknown'}:service.store.set_setting(cooldown_key,service.clock())
             receipts.append(result)
             # Ambiguous writes never trigger another delivery as an automatic fallback.
             if result.state == 'unknown':

@@ -3,8 +3,9 @@ from zoneinfo import ZoneInfo
 from .sharing import routes
 
 class Policy:
-    def __init__(self,config):self.config=config
+    def __init__(self,config,ready=None):self.config=config;self.ready=ready
     def account(self,provider,account):
+        if self.ready is not None and not self.ready():raise PermissionError('deployment_not_ready')
         value=self.config.get('platforms',{}).get(provider,{})
         if not self.config.get('enabled',False) or not value.get('enabled',False):raise PermissionError('platform_disabled')
         item=value.get('accounts',{}).get(account)

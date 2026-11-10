@@ -140,3 +140,19 @@ def test_trial_mode_cannot_send_platform_actions():
  item['actions']['reply']=True;item['reply']={'dry_run':True}
  with pytest.raises(PermissionError,match='dry_run'):Policy(cfg).permit('p','a','reply')
  assert Policy(cfg).permit('p','a','browse')
+
+
+def test_imported_daily_usage_prevents_resetting_budget_during_cutover(tmp_path):
+ store=Store(tmp_path/'db');store.import_budget_baseline('all','today',9)
+ store.import_budget_baseline('all','today',8) # idempotent older imports never reduce used slots
+ assert store.claim_action('one','p','a','reply',[('all','today',10)])
+ with pytest.raises(BudgetExceeded):store.claim_action('two','p','a','reply',[('all','today',10)])
+ store.finish_action('one',models.Receipt('failed'))
+ assert store.claim_action('three','p','a','reply',[('all','today',10)])
+
+
+def test_seen_without_score_prevents_repeat_but_does_not_fake_learning(tmp_path):
+ store=Store(tmp_path/'db');store.mark_read('xiaoheihe','a','123',1000)
+ assert store.observed_ids('xiaoheihe','a',900)==['123']
+ assert store.preferences(1000)==[]
+ assert store.observed_ids('xiaoheihe','other',900)==[]

@@ -104,5 +104,10 @@
     "type": "int",
     "description": "自主活动倾向（0到100），不是必须完成的次数",
     "default": 55
+  },
+  "model_ids": {
+    "type": "dict",
+    "description": "按任务指定模型，留空沿用统一模型",
+    "default": {}
   }
 }

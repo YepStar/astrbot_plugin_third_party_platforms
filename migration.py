@@ -9,6 +9,7 @@ from .core.store import Store
 from .core.secrets import SecretStore
 from .core.configuration import account as normalize_account
 from .core.models import Receipt,Incoming
+from .migration_history import import_history
 
 BILI_KEYS={'SESSDATA','BILI_JCT','DEDE_USER_ID','BUVID3','BUVID4','REFRESH_TOKEN','AC_TIME_VALUE','PROXY_URL'}
 
@@ -30,23 +31,29 @@ def preview(root):
         'unmapped_bili_keys':sorted(k for k in b if k not in BILI_KEYS),
         'reply_private_scope':b.get('PRIVATE_MESSAGE_REPLY_SCOPE','owner')}
 
+def clock_text(value):
+    if isinstance(value,int) or (isinstance(value,str) and value.isdigit()):
+        if not 0<=int(value)<24:raise ValueError('invalid_legacy_sleep_hour')
+        return f'{int(value):02d}:00'
+    return str(value)
+
 def build_config(b,x):
     bili=normalize_account('bilibili',{
         'enabled':True,'owner_umo':b.get('OWNER_QQ_UMO',''),'owner_uid':str(b.get('OWNER_MID','')),'self_uid':str(b.get('DEDE_USER_ID','')),
         'share_delivery':b.get('RECOMMEND_OWNER_DELIVERY','private_message'),'owner_bili_name':b.get('OWNER_BILI_NAME',''),
-        'share_enabled':bool(b.get('ENABLE_OWNER_RECOMMEND',False)), 'share_min_score':b.get('RECOMMEND_OWNER_MIN_SCORE',8),
+        'share_gap_seconds':int(b.get('RECOMMEND_OWNER_MIN_GAP_MINUTES',120))*60,'share_enabled':bool(b.get('ENABLE_OWNER_RECOMMEND',False)), 'share_min_score':b.get('RECOMMEND_OWNER_MIN_SCORE',8),
         'reply_enabled':bool(b.get('ENABLE_REPLY',False)),
         'private_reply_enabled':bool(b.get('ENABLE_PRIVATE_MESSAGES',False) and b.get('PRIVATE_MESSAGE_AUTO_REPLY',True)),
         'comment_enabled':bool(b.get('PROACTIVE_COMMENT',False)), 'comment_min_score':b.get('PROACTIVE_COMMENT_MIN_SCORE',8),
         'dynamic_enabled':bool(b.get('ENABLE_DYNAMIC',False)),'daily_dynamic_limit':b.get('AUTONOMOUS_DYNAMIC_DAILY_MAX',1),
         'daily_browse_limit':b.get('PROACTIVE_DAILY_LIMIT',4), 'daily_share_limit':b.get('RECOMMEND_OWNER_DAILY_LIMIT',1),
-        'daily_reply_limit':b.get('AUTONOMOUS_REPLY_DAILY_MAX',80),'daily_comment_limit':b.get('PROACTIVE_COMMENT_DAILY_LIMIT',2)})
-    bili['reply'].update(private_scope=b.get('PRIVATE_MESSAGE_REPLY_SCOPE','owner'),
+        'daily_private_reply_limit':b.get('AUTONOMOUS_PRIVATE_DAILY_MAX',30),'daily_reply_limit':b.get('AUTONOMOUS_REPLY_DAILY_MAX',80),'daily_comment_limit':b.get('PROACTIVE_COMMENT_DAILY_LIMIT',2)})
+    bili['reply'].update(poll_seconds=max(60,int(b.get('POLL_INTERVAL',120))),max_age_seconds=b.get('PRIVATE_MESSAGE_MAX_MESSAGE_AGE',3600),always_reply_uids=[str(v) for v in b.get('REPLY_ALWAYS_UIDS',[])],instruction=b.get('CUSTOM_REPLY_INSTRUCTION',''),private_instruction=b.get('CUSTOM_PRIVATE_MESSAGE_INSTRUCTION',''),private_scope=b.get('PRIVATE_MESSAGE_REPLY_SCOPE','owner'),
         private_whitelist=b.get('PRIVATE_MESSAGE_REPLY_WHITELIST_UIDS',[]),
         cooldown_seconds=b.get('REPLY_COOLDOWN',60), probability_percent=b.get('REPLY_PROBABILITY_PERCENT',100),
         interest_filter=bool(b.get('ENABLE_INTEREST_BASED_REPLY',False)),
         similar_skip=bool(b.get('ENABLE_SIMILAR_SKIP',False)),similarity_percent=b.get('REPLY_SIMILARITY_PERCENT',85))
-    bili['browse'].update(pools=b.get('PROACTIVE_VIDEO_POOLS',['popular']),follow_uids=b.get('PROACTIVE_FOLLOW_UIDS',[]),
+    bili['browse'].update(count=min(5,max(1,int(b.get('PROACTIVE_VIDEO_COUNT',2)))),pools=b.get('PROACTIVE_VIDEO_POOLS',['popular']),follow_uids=b.get('PROACTIVE_FOLLOW_UIDS',[]),
         special_follow_enabled=bool(b.get('SPECIAL_FOLLOW_ENABLED',False)))
     xaccounts={};browse=x.get('browse_companion',{});permissions=x.get('permissions',{});reply=x.get('reply',{})
     for profile in x.get('profiles',[]):
@@ -56,20 +63,31 @@ def build_config(b,x):
             'share_enabled':bool(browse.get('enabled') and browse.get('share_enabled') and browse.get('profile_id','default')==pid),
             'reply_enabled':not dry and bool(profile.get('poll_mentions') or profile.get('poll_replies')),
             'comment_enabled':False, # Existing proactive-feed review flow is NOT an authorization for automatic publication.
-            'share_min_score':8,'daily_share_limit':browse.get('share_daily_limit',1),
+            'share_gap_seconds':int(browse.get('share_gap_minutes',90))*60,'share_min_score':b.get('RECOMMEND_OWNER_MIN_SCORE',8),'daily_share_limit':browse.get('share_daily_limit',1),
             'poll_seconds':max(60,x.get('polling',{}).get('poll_interval_seconds',180)),
             **{key:permissions.get(key,[]) for key in ['user_whitelist','user_blacklist','author_whitelist','author_blacklist','keyword_blacklist']},
             'whitelist_mode':bool(permissions.get('whitelist_mode',False)),
             'only_explicit_mentions':bool(reply.get('only_explicit_mentions',True)),
             'reply_to_direct_replies':bool(reply.get('reply_to_direct_replies',True))}
         account=normalize_account('xiaoheihe',values)
+        account['network']=x.get('network',{})
+        account['context']=x.get('context',{})
+        account['browse']['count']=min(5,max(1,int(browse.get('posts_per_session',2))))
         account['browse']['topic_ids']=x.get('proactive_feed',{}).get('topic_ids',[])
         account['reply'].update(poll_mentions=bool(profile.get('poll_mentions',True)),poll_replies=bool(profile.get('poll_replies',True)),
             dry_run=bool(dry), max_reply_chars=reply.get('max_reply_chars',300))
         xaccounts[pid]=account
-    return {'enabled':False,'timezone':'Asia/Shanghai','memory_enabled':True,'provider_id':b.get('SCHEDULE_PLAN_PROVIDER_ID',''),
+    windows=list(dict.fromkeys((b.get('FIXED_PROACTIVE_WINDOWS') or ['10:00-11:00','20:00-21:00'])+(browse.get('windows') or [])))
+    model=b.get('SCHEDULE_PLAN_PROVIDER_ID') or b.get('GENERATION_PROVIDER_ID') or b.get('LLM_PROVIDER_ID') or browse.get('provider_id','')
+    return {'enabled':False,'public_persona':b.get('CUSTOM_SYSTEM_PROMPT',''),'activity_level':b.get('AUTONOMOUS_ACTIVITY_LEVEL',55),
+        'rest_windows':[clock_text(b.get('SLEEP_START','01:00'))+'-'+clock_text(b.get('SLEEP_END','08:00'))],
+        'exploration_ratio':float(b.get('PROACTIVE_EXPLORATION_RATIO',.15)),
+        'preference_half_life_days':b.get('PROACTIVE_PREFERENCE_HALF_LIFE_DAYS',14),
+        'model_ids':{'daily_plan':model,'evaluation':b.get('SUMMARY_PROVIDER_ID') or model,'platform_reply':b.get('LLM_PROVIDER_ID') or model},
+        'comment_min_score':b.get('PROACTIVE_COMMENT_MIN_SCORE',8),'minute_limit':b.get('BEHAVIOR_GLOBAL_MAX_PER_MINUTE',12),
+        'timezone':'Asia/Shanghai','memory_enabled':True,'provider_id':model,
         'platforms':{'bilibili':{'enabled':True,'accounts':{'default':bili}},'xiaoheihe':{'enabled':True,'accounts':xaccounts}},
-        'windows':b.get('FIXED_PROACTIVE_WINDOWS') or browse.get('windows') or ['10:00-11:00','20:00-21:00'],
+        'windows':windows,
         'control_umos':[b['OWNER_QQ_UMO']] if b.get('OWNER_QQ_UMO') else [],
         'share_min_score':b.get('RECOMMEND_OWNER_MIN_SCORE',8),'daily_limit':b.get('BEHAVIOR_GLOBAL_DAILY_LIMIT',20),
         'daily_rounds':b.get('PROACTIVE_TIMES_COUNT',2)}
@@ -163,9 +181,11 @@ def apply(root,target,*,source_stopped=False):
             for row in db.execute('SELECT profile_id,event_type,last_event_id FROM notification_cursors'):
                 store.ingest('xiaoheihe',row['profile_id'],row['event_type'],[],{'latest':row['last_event_id']})
         finally:db.close()
+    store.set_setting('legacy_private_review',private_review)
+    history=import_history(root,store,record,load)
     configfile=target/'imported-config.json';configfile.write_text(json.dumps(configuration,ensure_ascii=False,indent=2));configfile.chmod(0o600)
     result={'schema':1,'complete':True,'legacy_stopped_asserted':True,'imported_actions':imported,
-        'private_pending_review':private_review,'config_file':'imported-config.json','activation_allowed':False,'reason':'capability parity review required',
+        'history':history,'private_pending_review':private_review,'config_file':'imported-config.json','activation_allowed':False,'reason':'capability parity review required',
         'at':time.time()}
     marker.write_text(json.dumps(result,indent=2));marker.chmod(0o600)
     return result
