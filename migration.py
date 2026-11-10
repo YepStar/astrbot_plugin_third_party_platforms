@@ -48,6 +48,7 @@ def build_config(b,x):
         'dynamic_enabled':bool(b.get('ENABLE_DYNAMIC',False)),'daily_dynamic_limit':b.get('AUTONOMOUS_DYNAMIC_DAILY_MAX',1),
         'daily_browse_limit':b.get('PROACTIVE_DAILY_LIMIT',4), 'daily_share_limit':b.get('RECOMMEND_OWNER_DAILY_LIMIT',1),
         'daily_private_reply_limit':b.get('AUTONOMOUS_PRIVATE_DAILY_MAX',30),'daily_reply_limit':b.get('AUTONOMOUS_REPLY_DAILY_MAX',80),'daily_comment_limit':b.get('PROACTIVE_COMMENT_DAILY_LIMIT',2)})
+    bili=normalize_account('bilibili',additional_bili_settings(b),bili)
     bili['reply'].update(poll_seconds=max(60,int(b.get('POLL_INTERVAL',120))),max_age_seconds=b.get('PRIVATE_MESSAGE_MAX_MESSAGE_AGE',3600),always_reply_uids=[str(v) for v in b.get('REPLY_ALWAYS_UIDS',[])],instruction=b.get('CUSTOM_REPLY_INSTRUCTION',''),private_instruction=b.get('CUSTOM_PRIVATE_MESSAGE_INSTRUCTION',''),private_scope=b.get('PRIVATE_MESSAGE_REPLY_SCOPE','owner'),
         private_whitelist=b.get('PRIVATE_MESSAGE_REPLY_WHITELIST_UIDS',[]),
         cooldown_seconds=b.get('REPLY_COOLDOWN',60), probability_percent=b.get('REPLY_PROBABILITY_PERCENT',100),
@@ -74,6 +75,7 @@ def build_config(b,x):
         account['context']=x.get('context',{})
         account['browse']['count']=min(5,max(1,int(browse.get('posts_per_session',2))))
         account['browse']['topic_ids']=x.get('proactive_feed',{}).get('topic_ids',[])
+        account['browse']['fallback_sources']=x.get('proactive_feed',{}).get('fallback_sources',['all'])
         account['reply'].update(poll_mentions=bool(profile.get('poll_mentions',True)),poll_replies=bool(profile.get('poll_replies',True)),
             dry_run=bool(dry), max_reply_chars=reply.get('max_reply_chars',300))
         xaccounts[pid]=account
@@ -197,3 +199,19 @@ def apply(root,target,*,source_stopped=False,handover_started=None):
         'at':time.time()}
     marker.write_text(json.dumps(result,indent=2));marker.chmod(0o600)
     return result
+
+# Additional UI/runtime settings introduced after the first comparison migration.
+BILI_ADDITIONAL={
+ 'browse_enabled':'ENABLE_PROACTIVE','browse_count':'PROACTIVE_VIDEO_COUNT','video_daily_limit':'PROACTIVE_DAILY_LIMIT',
+ 'custom_reply_instruction':'CUSTOM_REPLY_INSTRUCTION','custom_private_instruction':'CUSTOM_PRIVATE_MESSAGE_INSTRUCTION',
+ 'custom_proactive_instruction':'CUSTOM_PROACTIVE_INSTRUCTION','custom_recommend_instruction':'CUSTOM_RECOMMEND_INSTRUCTION',
+ 'interest_selection_prompt':'INTEREST_SELECTION_PROMPT','filter_low_value':'FILTER_LOW_VALUE_MESSAGES',
+ 'filter_duplicate':'FILTER_DUPLICATE_MESSAGES','filter_ads':'FILTER_AD_MESSAGES','context_enabled':'COMMENT_CONTEXT_ENABLED',
+ 'private_interest_filter':'INTEREST_APPLY_TO_PRIVATE','private_max_age':'PRIVATE_MESSAGE_MAX_MESSAGE_AGE',
+ 'private_max_per_poll':'PRIVATE_MESSAGE_MAX_PER_POLL','reply_model':'LLM_PROVIDER_ID','evaluation_model':'SUMMARY_PROVIDER_ID',
+ 'comment_model':'GENERATION_PROVIDER_ID','vision_model':'VIDEO_VISION_PROVIDER_ID',
+ 'like_enabled':'PROACTIVE_LIKE','like_min_score':'PROACTIVE_LIKE_MIN_SCORE','coin_enabled':'PROACTIVE_COIN',
+ 'coin_min_score':'PROACTIVE_COIN_MIN_SCORE','favorite_enabled':'PROACTIVE_FAV','favorite_min_score':'PROACTIVE_FAV_MIN_SCORE',
+ 'follow_enabled':'PROACTIVE_FOLLOW','follow_min_score':'PROACTIVE_FOLLOW_MIN_SCORE'}
+def additional_bili_settings(legacy):
+    return {key:legacy[source] for key,source in BILI_ADDITIONAL.items() if source in legacy}

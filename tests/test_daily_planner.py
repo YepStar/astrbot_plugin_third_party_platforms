@@ -92,3 +92,26 @@ def test_planning_model_override_invalidates_cached_daily_plan(tmp_path):
   await planner.ensure([('p','a')])
   assert generate.await_count==2
  asyncio.run(run())
+
+def test_unchanged_slots_are_reused_on_replan(tmp_path):
+ async def run():
+  store,now,cfg,generate,planner=setup(tmp_path)
+  await planner.ensure([('p','a')]);original=store.tasks()[0]
+  cfg['exploration_ratio']=.35
+  await planner.ensure([('p','a')])
+  assert len(store.tasks())==1 and store.tasks()[0]['id']==original['id']
+  cfg['platforms']['p']['accounts']['a']['browse']={'query':'new'}
+  await planner.ensure([('p','a')])
+  assert len(store.tasks())==1 and store.tasks()[0]['params']['query']=='new'
+ asyncio.run(run())
+
+def test_restoring_previous_window_does_not_collide_with_cancelled_event_id(tmp_path):
+ async def run():
+  store,now,cfg,generate,planner=setup(tmp_path)
+  await planner.ensure([('p','a')])
+  cfg['windows'][0]='10:30-11:30';await planner.ensure([('p','a')])
+  cfg['windows'][0]='10:00-11:00';await planner.ensure([('p','a')])
+  planned=[t for t in store.tasks() if t['state']=='planned']
+  assert len(planned)==1
+  assert datetime.fromtimestamp(planned[0]['start'],ZoneInfo('Asia/Shanghai')).strftime('%H:%M')=='10:00'
+ asyncio.run(run())

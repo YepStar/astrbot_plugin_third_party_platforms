@@ -2147,5 +2147,43 @@
       ],
       "registered_handlers": []
     }
-  }
+  },
+  "workbench_0_2_sources": [
+    {
+      "plugin": "astrbot_plugin_bilibili_ai_bot",
+      "path": "_conf_schema.json",
+      "sha256": "581ab7fe0ea583f11cbdcb0ee716e52a648ebf56dd621ff0c29b4998dd08a9f4",
+      "license": "MIT"
+    },
+    {
+      "plugin": "astrbot_plugin_bilibili_ai_bot",
+      "path": "core/webui_bridge.py",
+      "sha256": "d8fffaec1c3c1ed8780004a185e800a4b675733db6a337bf701874400eaceb68",
+      "license": "MIT"
+    },
+    {
+      "plugin": "astrbot_plugin_bilibili_ai_bot",
+      "path": "pages/bilibot/app.js",
+      "sha256": "e209a89890272f450f3bef8f246a204cb786e04446ebf9f2343dada001583662",
+      "license": "MIT"
+    },
+    {
+      "plugin": "astrbot_plugin_xiaoheihe_adapter",
+      "path": "xiaoheihe/feed_service.py",
+      "sha256": "48c1203e5e62b97e6ef7fe7aa559744afc8dae59104f2c42e57a71d2e9c1cf16",
+      "license": "MIT"
+    },
+    {
+      "plugin": "astrbot_plugin_xiaoheihe_adapter",
+      "path": "xiaoheihe/web_api.py",
+      "sha256": "5dbad58ced626b78fd84994586dcc0a584f97c86dbd78c778e8ed0b2a82e3f1c",
+      "license": "MIT"
+    },
+    {
+      "plugin": "astrbot_plugin_xiaoheihe_adapter",
+      "path": "pages/xiaoheihe/topic_probe.js",
+      "sha256": "2a11591e29fee6a95c36fd8e8fb3923854dc358cfb5fc6065a03c83eb41e0bab",
+      "license": "MIT"
+    }
+  ]
 }

@@ -196,3 +196,18 @@ async def test_login_identity_whitelisted_and_refreshed_on_account_switch(app):
  await client.post('/action',json={'operation':'account_status','provider':'bilibili','account':'default'})
  data=(await (await client.get('/state')).get_json())['data']['account_statuses']['bilibili']['default']
  assert 'nickname' not in data
+
+async def test_topic_probe_and_storage_operations_are_scoped(app):
+ app,plugin=app;client=app.test_client()
+ plugin.config['platforms']={'xiaoheihe':{'accounts':{'default':{'enabled':True}}}}
+ provider=plugin.registry.get('xiaoheihe');provider.probe_topics=AsyncMock(return_value={'topics':[{'id':'42','name':'AI'}],'topic_count':1,'read_only':True})
+ result=await client.post('/action',json={'operation':'topics_probe','provider':'xiaoheihe','account':'default'})
+ assert result.status_code==200
+ data=(await (await client.get('/state')).get_json())['data']
+ assert data['topic_catalogs']['default']['topics'][0]['id']=='42'
+ result=await client.post('/action',json={'operation':'storage_status','provider':'xiaoheihe'})
+ assert result.status_code==200 and (await result.get_json())['data']['database_shared']
+ result=await client.post('/action',json={'operation':'storage_cleanup','provider':'xiaoheihe','retention_days':30})
+ assert result.status_code==400
+ result=await client.post('/action',json={'operation':'storage_preview','provider':'xiaoheihe','retention_days':1})
+ assert result.status_code==400

@@ -1,3 +1,15 @@
+## 0.2.0 workbench parity pass
+
+User requests: BiliBot-style daily event ring/list, explain duplicate cancelled schedules, richer original Bili controls, XHH real-topic probe/checkbox/fallback/source storage, detailed connection views. Implemented native SVG time ring with concurrent lanes; current events exclude cancellation history. Platform schedule history remains inspectable. apply_daily_plan reuses same provider/account/action/time window instead of replacing solely because its planning fingerprint changed; updated params increment revision, superseded events keep a reason flag, manual/executed blocks remain protected.
+
+Added 32 advanced active runtime controls: reply/private/comment/recommend instructions; filtering and bounded context; private limits; scoped model overrides; browse enable/count/video caps; bounded timeout; per-account sparse vision settings; explicitly permissioned like/coin/favorite/follow through durable Executor with score/quota/dry-run checks, raw platform receipts and no write retries. Defaults remain off for added external interactions. Existing migrated per-round count and current browse activation are preserved during the local supplementary import. additional_bili_settings() maps only non-secret legacy controls.
+
+XHH source catalog/GET-only real-feed probe plus selection up to20 and fallback categories/aliases derived from MIT original. Successful empty real feeds do not fall back; only no selected topics or all failures do. Source selection drafts survive navigation. storage.py gives scoped counts/shared physical size and preview-confirm terminal-body retention; all send/dedupe/quota/learning/schedule/private-token data and old databases are protected. Account view uses real platform public metadata plus current-day scoped action aggregates, never raw credentials.
+
+Original schema metadata retained in bili_reference.js (no runtime values), with active/shared/pending labels. Live, bangumi, mood/profile, full tools, richer dynamic/direct-media features remain comparison work; do not claim total original functional parity. See CONFIGURATION.md and COMPARISON.md. Old plugins remain disabled and retained.
+
+Validation: 213 plugin tests; source JS syntax; isolated browser ring, source probe/select/save, storage preview, Bili prompt save and account detail checks. Live verification results are recorded in verification.json. No test comments, coins, follows or cleanup were sent.
+
 ## 0.1.2 identity / music activation fix
 
 Platform login checks now return nickname + UID; account_status caches only whitelisted public identity. UI displays authenticated nicknames in overview, connection, task and selection views; local profile IDs are explicitly labelled configuration identifiers. Music exposes optional third_party_account_status(): explicit read-only login/identity request, separate from scheduler heartbeat; no cookie is returned. Missing/expired login clears the previous cached identity.

@@ -192,12 +192,24 @@ class Store:
             validated.append((key,task['provider'],task['account'],task['action'],a,b,json.dumps(params),slot))
         with self.connect() as db:
             db.execute('BEGIN IMMEDIATE')
-            previous=db.execute("SELECT id,params,pinned,state FROM tasks WHERE origin='automatic' AND id LIKE ?",(f'plan:{day}:%',)).fetchall()
+            previous=db.execute("SELECT * FROM tasks WHERE origin='automatic' AND id LIKE ?",(f'plan:{day}:%',)).fetchall()
             blocked={json.loads(row['params']).get('_planner_slot') for row in previous if row['pinned'] or row['state'] not in {'planned','skipped','cancelled'}}
-            db.execute("UPDATE tasks SET state='cancelled',revision=revision+1 WHERE origin='automatic' AND id LIKE ? AND state='planned' AND pinned=0",(f'plan:{day}:%',))
+            retained=set()
             for key,pid,aid,kind,a,b,params,slot in validated:
                 if slot in blocked:continue
-                db.execute("INSERT OR IGNORE INTO tasks VALUES(?,1,?,?,?,?,?,'planned','automatic',0,?)",(key,pid,aid,kind,a,b,params))
+                # Reuse the same live event when only planner settings/params changed.
+                existing=next((r for r in previous if r['state']=='planned' and not r['pinned'] and r['id'] not in retained and (r['provider'],r['account'],r['action'],r['start'],r['end'])==(pid,aid,kind,a,b)),None)
+                if existing:
+                    retained.add(existing['id'])
+                    if existing['params']!=params:db.execute('UPDATE tasks SET params=?,revision=revision+1 WHERE id=?',(params,existing['id']))
+                else:
+                    if db.execute('SELECT 1 FROM tasks WHERE id=?',(key,)).fetchone():key+=':'+uuid.uuid4().hex[:10]
+                    db.execute("INSERT OR IGNORE INTO tasks VALUES(?,1,?,?,?,?,?,'planned','automatic',0,?)",(key,pid,aid,kind,a,b,params))
+                    retained.add(key)
+            for row in previous:
+                if row['state']=='planned' and not row['pinned'] and row['id'] not in retained:
+                    params={**json.loads(row['params']),'_superseded':True}
+                    db.execute("UPDATE tasks SET state='cancelled',params=?,revision=revision+1 WHERE id=?",(json.dumps(params),row['id']))
             db.execute('INSERT OR REPLACE INTO settings VALUES(?,?)',('plan:'+day,json.dumps({'complete':True,'fingerprint':fingerprint,'at':now})))
 
     def enqueue_memory(self,key,payload):

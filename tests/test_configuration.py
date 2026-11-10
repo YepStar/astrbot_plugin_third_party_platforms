@@ -34,3 +34,15 @@ def test_xhh_edit_preserves_multi_topic_and_dry_run():
     {'pools':[]},{'pools':['popular']*9},{'share_delivery':'invented'},{'special_follow_enabled':'true'}])
 def test_invalid_source_settings_rejected(values):
     with pytest.raises(ValueError):account('bilibili',values)
+
+def test_advanced_bili_settings_and_fallback_categories_persist_without_enabling_actions():
+ a=account('bilibili',{'custom_reply_instruction':'自然回应','browse_count':4,'like_enabled':False,'reply_model':'model1','private_max_per_poll':10})
+ b=account('bilibili',{'comment_min_score':9},a)
+ assert b['reply']['custom_reply_instruction']=='自然回应' and b['browse']['count']==4
+ assert b['models']['reply_model']=='model1' and not b['interactions']['like_enabled']
+ assert b['reply']['private_max_per_poll']==10
+ with pytest.raises(ValueError):account('xiaoheihe',{'fallback_sources':['all','anime']})
+ assert account('xiaoheihe',{'fallback_sources':['anime','daily']})['browse']['fallback_sources']==['anime','daily']
+
+def test_video_interactions_cannot_be_granted_to_other_providers():
+ with pytest.raises(ValueError):account('xiaoheihe',{'like_enabled':True})

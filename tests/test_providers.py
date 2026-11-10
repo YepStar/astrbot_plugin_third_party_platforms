@@ -100,7 +100,8 @@ async def test_bili_status_returns_authenticated_identity(tmp_path):
  secrets=SecretStore(tmp_path/'secrets');secrets.write('bilibili','default',{'SESSDATA':'fixture'})
  provider=module.Bilibili(secrets,{})
  provider.client('default')._http_get=AsyncMock(return_value=({'code':0,'data':{'uname':'真实昵称','mid':42}},None))
- assert await provider.status('default')=={'ready':True,'state':'valid','nickname':'真实昵称','uid':'42'}
+ status=await provider.status('default')
+ assert {k:status[k] for k in ('ready','state','nickname','uid')}=={'ready':True,'state':'valid','nickname':'真实昵称','uid':'42'}
 
 @pytest.mark.asyncio
 async def test_xhh_status_uses_authenticated_credential_identity(tmp_path):
@@ -116,3 +117,37 @@ async def test_music_identity_check_separate_from_scheduler_heartbeat():
  assert (await provider.account_status('default'))['nickname']=='音乐昵称'
  facade.third_party_account_status.return_value={'login_ready':False,'nickname':'','uid':''}
  assert (await provider.account_status('default'))['ready'] is False
+
+@pytest.mark.asyncio
+async def test_xhh_all_real_topics_fail_before_category_fallback(tmp_path,monkeypatch):
+ m=importlib.import_module(package+'.providers.xiaoheihe')
+ store=SecretStore(tmp_path/'secrets');provider=m.Xiaoheihe(store,{})
+ client=SimpleNamespace(fetch_feed=AsyncMock(return_value=SimpleNamespace(items=[])))
+ provider.clients['default']=client
+ fetch=AsyncMock(side_effect=RuntimeError('fixture'))
+ monkeypatch.setattr(m,'fetch_topic_feed',fetch)
+ await provider.browse('default',{'topic_ids':['1','2'],'fallback_sources':['all']})
+ assert fetch.await_count==2;client.fetch_feed.assert_awaited_once()
+ client.fetch_feed.reset_mock();fetch.side_effect=None;fetch.return_value=SimpleNamespace(items=[])
+ await provider.browse('default',{'topic_ids':['1','2'],'fallback_sources':['all']})
+ client.fetch_feed.assert_not_awaited() # A valid empty feed must not silently broaden sources.
+
+@pytest.mark.asyncio
+async def test_bili_interactions_use_explicit_platform_receipts_and_no_retry(tmp_path):
+ m=importlib.import_module(package+'.providers.bilibili');secrets=SecretStore(tmp_path/'secrets');secrets.write('bilibili','default',{'BILI_JCT':'fixture'})
+ provider=m.Bilibili(secrets,{});client=provider.client('default');client._http_post=AsyncMock(return_value=({'code':0},None))
+ receipt=await provider.execute('default','like',{'aid':'42'},'key')
+ assert receipt.state=='succeeded' and receipt.external_id=='42'
+ client._http_post.assert_awaited_once();client._http_post.return_value=({'code':-1},None)
+ assert (await provider.execute('default','coin',{'aid':'42'},'coin')).state=='failed'
+
+def test_interactions_require_explicit_permission_score_and_honor_dry_run():
+ Policy=importlib.import_module(package+'.core.policy').Policy
+ cfg={'enabled':True,'platforms':{'bilibili':{'enabled':True,'accounts':{'default':{'enabled':True,'interactions':{'coin_enabled':False,'coin_min_score':9}}}}}}
+ policy=Policy(cfg);evaluation=SimpleNamespace(score=9)
+ with pytest.raises(PermissionError):policy.permit('bilibili','default','coin',evaluation)
+ a=cfg['platforms']['bilibili']['accounts']['default'];a['interactions']['coin_enabled']=True
+ with pytest.raises(PermissionError):policy.permit('bilibili','default','coin',SimpleNamespace(score=8))
+ policy.permit('bilibili','default','coin',evaluation)
+ a['reply']={'dry_run':True}
+ with pytest.raises(PermissionError):policy.permit('bilibili','default','coin',evaluation)

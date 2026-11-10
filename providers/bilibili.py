@@ -34,7 +34,7 @@ class Client(BilibiliAPIMixin):
         if urlsplit(url).scheme!='https' or not(host in trusted or (method=='GET' and cdn)):raise ValueError('untrusted_endpoint')
         hdr=(headers or self._headers()) if host in trusted else {'User-Agent':USER_AGENT}
         async with plugin_http_session(self.config) as session:
-            async with (session.get if method=='GET' else session.post)(url,headers=hdr,params=params,data=data,timeout=aiohttp.ClientTimeout(total=timeout),allow_redirects=False) as response:
+            async with (session.get if method=='GET' else session.post)(url,headers=hdr,params=params,data=data,timeout=aiohttp.ClientTimeout(total=getattr(self,"timeout",timeout)),allow_redirects=False) as response:
                 if response.status!=200:raise RuntimeError(f'http_{response.status}')
                 chunks=[];size=0
                 async for chunk in response.content.iter_chunked(65536):
@@ -53,7 +53,7 @@ class PoolClient(BiliDiscovery):
 
 class Bilibili:
     id='bilibili'
-    capabilities=frozenset({'search','browse','comment','reply','dynamic','owner_share','private_reply'})
+    capabilities=frozenset({'search','browse','comment','reply','dynamic','owner_share','private_reply','like','coin','favorite','follow'})
     def __init__(self,secrets,options,*,generate=None,cache_root=None):
         self.secrets=secrets;self.options=options;self.clients={};self.qr={}
         self.generate=generate;self.cache_root=cache_root or secrets.root.parent/'media_tmp';self.last_visual={};self.visual_cache={}
@@ -61,6 +61,7 @@ class Bilibili:
         if account not in self.clients:
             cfg=CredentialsConfig(self.secrets.read(self.id,account),lambda v:self.secrets.write(self.id,account,v))
             self.clients[account]=Client(cfg)
+        self.clients[account].timeout=self.options.get('platforms',{}).get(self.id,{}).get('accounts',{}).get(account,{}).get('network',{}).get('request_timeout_seconds',20)
         return self.clients[account]
     async def status(self,account):
         client=self.client(account)
@@ -69,7 +70,7 @@ class Bilibili:
         code=raw.get('code')
         if code==0:
             profile=raw.get('data') or {}
-            return {'ready':True,'state':'valid','nickname':profile.get('uname',''),'uid':str(profile.get('mid') or '')}
+            return {'ready':True,'state':'valid','nickname':profile.get('uname',''),'uid':str(profile.get('mid') or ''),'level':profile.get('level_info',{}).get('current_level'),'coins':profile.get('money'),'vip':bool(profile.get('vipStatus')),'avatar':profile.get('face',''),'email_verified':bool(profile.get('email_verified')),'mobile_verified':bool(profile.get('mobile_verified'))}
         if code in {-101,-111}:return {'ready':False,'state':'invalid'}
         return {'ready':None,'state':'unreachable'}
     async def request_login(self,account):
@@ -89,7 +90,7 @@ class Bilibili:
             client.config.save_config();self.qr.pop(account,None)
         return {'state':'success' if code==0 else str(code)}
     async def browse(self,account,options):
-        client=self.client(account);limit=max(1,min(5,int(options.get('count',2))))
+        client=self.client(account);limit=max(1,min(10,int(options.get('count',2))))
         query=options.get('query','')
         rows=[];follow=[]
         uids=options.get('follow_uids',[])
@@ -130,19 +131,24 @@ class Bilibili:
                 str(info.get('owner',{}).get('mid','')),mode,{'aid':info.get('aid')}))
         return results
     async def visual(self,account,info,subtitles=''):
-        policy=self.options.get('vision_policy','when_text_insufficient')
+        account_config=self.options.get('platforms',{}).get(self.id,{}).get('accounts',{}).get(account,{})
+        overrides=account_config.get('vision',{})
+        options={**self.options,**{k:v for k,v in overrides.items() if k in {'vision_frame_count','vision_max_mb'} and v}}
+        policy=overrides.get('account_vision_policy','inherit')
+        if policy=='inherit':policy=options.get('vision_policy','when_text_insufficient')
         if policy not in {'off','when_text_insufficient','always'}:raise ValueError('invalid_vision_policy')
         if policy=='off' or (policy=='when_text_insufficient' and len(subtitles.strip())>=40):return None
         if self.generate is None:
             self.last_visual={'state':'unavailable','code':'vision_generator_unconfigured'};return None
-        bvid=info.get('bvid','');key=(account,bvid,str(self.options.get('model_ids',{}).get('video_frames','')),self.options.get('vision_frame_count',5))
+        bvid=info.get('bvid','');key=(account,bvid,str(account_config.get('models',{}).get('vision_model') or options.get('model_ids',{}).get('video_frames','')),options.get('vision_frame_count',5),options.get('vision_max_mb',96),policy)
         cached=self.visual_cache.get(key)
         if cached and cached[0]>time.time():return cached[1]
         try:
             async with asyncio.timeout(240):
-                source=FrameSource(self.cache_root,self.client(account).config,self.options)
+                source=FrameSource(self.cache_root,self.client(account).config,options)
                 async with source.capture(bvid) as frames:
-                    result=await describe_frames(self.generate,frames,{'provider':self.id,'external_id':bvid,
+                    async def scoped_generate(phase,data):return await self.generate(phase,{**data,'platform':self.id,'account':account})
+                    result=await describe_frames(scoped_generate,frames,{'provider':self.id,'external_id':bvid,
                         'title':str(info.get('title',''))[:300],'description':str(info.get('desc',''))[:800]})
             if len(self.visual_cache)>=50:self.visual_cache.pop(next(iter(self.visual_cache)))
             self.visual_cache[key]=(time.time()+3600,result)
@@ -167,6 +173,19 @@ class Bilibili:
 
     async def execute(self,account,action,params,key):
         client=self.client(account);csrf=client.config.get('BILI_JCT','')
+        if action in {'like','coin','favorite','follow'}:
+            identifier=str(params.get('mid' if action=='follow' else 'aid',''))
+            if not identifier.isdigit() or not csrf:raise ValueError('invalid_interaction_target')
+            endpoints={'like':'https://api.bilibili.com/x/web-interface/archive/like','coin':'https://api.bilibili.com/x/web-interface/coin/add','favorite':'https://api.bilibili.com/x/v3/fav/resource/deal','follow':'https://api.bilibili.com/x/relation/modify'}
+            payload={'csrf':csrf,'aid':identifier,'like':1} if action=='like' else {'csrf':csrf,'aid':identifier,'multiply':1,'select_like':0} if action=='coin' else {'csrf':csrf,'fid':identifier,'act':1,'re_src':11}
+            if action=='favorite':
+                raw,_=await client._http_get('https://api.bilibili.com/x/v3/fav/folder/created/list-all',params={'up_mid':client.config.get('DEDE_USER_ID','')})
+                folders=raw.get('data',{}).get('list',[]) if raw.get('code')==0 else []
+                folder=next((f for f in folders if f.get('title')=='默认收藏夹'),folders[0] if folders else None)
+                if not folder:return Receipt('failed',code='favorite_folder_unavailable')
+                payload={'csrf':csrf,'rid':identifier,'type':2,'add_media_ids':str(folder['id']),'del_media_ids':''}
+            raw,_=await client._http_post(endpoints[action],data=payload)
+            return Receipt('succeeded',identifier) if raw.get('code')==0 else Receipt('failed',code='platform_rejected')
         if action in {'comment','reply'}:
             body={'oid':str(params['oid']),'type':int(params.get('type',1)),'message':str(params['text'])[:1000],'csrf':csrf}
             if params.get('at_name_to_mid'):body['at_name_to_mid']=json.dumps(params['at_name_to_mid'],ensure_ascii=False)
@@ -225,7 +244,7 @@ class Bilibili:
                     sequences[talker]=maximum;continue # First account observation: skip historical conversations.
                 old=int(sequences.get(talker,0));sequences.setdefault(talker,0)
                 if maximum<=old:continue
-                page,_=await client._http_get('https://api.vc.bilibili.com/svr_sync/v1/svr_sync/fetch_session_msgs',params={'talker_id':talker,'session_type':1,'begin_seqno':old,'size':20,'sender_device_id':1,'build':0,'mobi_app':'web'})
+                page,_=await client._http_get('https://api.vc.bilibili.com/svr_sync/v1/svr_sync/fetch_session_msgs',params={'talker_id':talker,'session_type':1,'begin_seqno':old,'size':max(1,min(100,int(cfg.get('reply',{}).get('private_max_per_poll',20)))),'sender_device_id':1,'build':0,'mobi_app':'web'})
                 if page.get('code')!=0:raise RuntimeError('private_messages_unavailable')
                 for item in reversed(page.get('data',{}).get('messages',[])):
                     seq=int(item.get('msg_seqno') or 0);actor=str(item.get('sender_uid',''))

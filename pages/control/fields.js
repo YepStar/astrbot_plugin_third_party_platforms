@@ -1,17 +1,29 @@
 export const accountFields=[
+['browse_enabled','启用主动看片','bool',true],['browse_count','每轮最多观看视频 / 帖子数','number',2,1,10],['video_daily_limit','每天最多观看视频数（0 不限制）','number',0,0,1000],
+['custom_proactive_instruction','主动评论补充提示词','textarea',''],['custom_recommend_instruction','给主人推荐的补充提示词','textarea',''],
+['custom_reply_instruction','评论回复补充提示词','textarea',''],['custom_private_instruction','私信回复补充提示词','textarea',''],['interest_selection_prompt','兴趣选择提示词','textarea',''],
+['filter_low_value','过滤无意义短消息','bool',false],['filter_duplicate','过滤近期完全重复消息','bool',true],['filter_ads','过滤广告、引流消息','bool',true],
+['context_enabled','回复时读取关联上下文','bool',true],['context_max_chars','关联上下文最多字数','number',16000,500,32000],
+['private_interest_filter','私信也使用兴趣选择','bool',false],['private_max_age','私信最长有效时间（秒）','number',3600,60,86400],['private_max_per_poll','每次获取会话消息最多条数','number',20,1,100],
+['reply_model','回复模型（留空沿用全局）','model',''],['evaluation_model','评分模型（留空沿用全局）','model',''],['comment_model','主动评论模型（留空沿用全局）','model',''],['vision_model','画面理解模型（留空沿用全局）','model',''],
+['request_timeout_seconds','平台请求超时（秒）','number',20,5,120],
+['account_vision_policy','视频画面分析策略','select','inherit'],['vision_frame_count','每次抽帧数量（0 沿用全局）','number',0,0,12],['vision_max_mb','视频下载上限 MB（0 沿用全局）','number',0,0,256],
+['like_enabled','允许主动点赞','bool',false],['like_min_score','点赞最低评分','number',8,1,10,.1],['coin_enabled','允许主动投币（每次花费1枚硬币）','bool',false],['coin_min_score','投币最低评分','number',9,1,10,.1],
+['favorite_enabled','允许收藏到默认收藏夹','bool',false],['favorite_min_score','收藏最低评分','number',9,1,10,.1],['follow_enabled','允许关注视频作者','bool',false],['follow_min_score','关注最低评分','number',9,1,10,.1],['interaction_daily_limit','各类视频互动每日上限','number',2,0,100],
+
 ['enabled','启用账号','bool',false],['owner_umo','分享接收会话（QQ私聊完整标识）','text',''],['owner_uid','该平台上的主人 UID','text',''],['self_uid','机器人账号 UID','text',''],
 ['query','浏览搜索词（B站）','text',''],['topic_id','浏览盒子分区编号（小黑盒）','text',''],
 ['pools','B站视频来源（逗号分隔，如 热门,排行榜:游戏）','text','popular'],['follow_uids','B站特别关注 UID（逗号分隔）','text',''],
 ['special_follow_enabled','浏览特别关注作者的新视频','bool',false],['topic_ids','小黑盒轮换分区编号（逗号分隔）','text',''],
 ['owner_bili_name','主人 B站昵称（评论提及时使用）','text',''],['share_delivery','B站分享方式','select','qq_private'],
-['share_enabled','允许分享','bool',false],['share_min_score','分享最低评分','number',8,1,10],['share_gap_seconds','两次分享至少间隔（秒）','number',7200,0,86400],
+['share_enabled','允许分享','bool',false],['share_min_score','分享最低评分','number',8,1,10,.1],['share_gap_seconds','两次分享至少间隔（秒）','number',7200,0,86400],
 ['listen_enabled','交给统一规划安排自主听歌（网易云）','bool',false],
-['dry_run','试运行：不发送平台评论、回复或动态','bool',false],
+['dry_run','试运行：不执行对外互动','bool',false],
 ['poll_mentions','接收小黑盒 @ 通知','bool',true],['poll_replies','接收小黑盒回复通知','bool',true],
 ['max_reply_chars','回复最多字数','number',300,1,1000],
 ['reply_enabled','允许回复评论与 @ 通知','bool',false],['private_reply_enabled','允许回复 B站私信','bool',false],
 ['private_scope','B站私信回复范围','select','owner'],['private_whitelist','私信白名单 UID（逗号分隔）','text',''],
-['comment_enabled','允许主动发表公开评论','bool',false],['comment_min_score','主动评论最低评分','number',8,1,10],
+['comment_enabled','允许主动发表公开评论','bool',false],['comment_min_score','主动评论最低评分','number',8,1,10,.1],
 ['dynamic_enabled','允许 B站动态发布','bool',false],
 ['whitelist_mode','只回复白名单用户','bool',false],['user_whitelist','回复用户白名单（逗号分隔）','text',''],['user_blacklist','用户黑名单（逗号分隔）','text',''],
 ['author_whitelist','原帖作者白名单（逗号分隔）','text',''],['author_blacklist','原帖作者黑名单（逗号分隔）','text',''],['keyword_blacklist','屏蔽词（逗号分隔）','text',''],
@@ -24,4 +36,4 @@ export const accountFields=[
 ['daily_reply_limit','每日最多公开回复条数','number',20,0,1000],['daily_private_reply_limit','每日最多私信回复条数','number',20,0,1000],['daily_comment_limit','每日最多主动评论条数','number',2,0,100],
 ['daily_dynamic_limit','每日最多发布动态条数','number',1,0,20]
 ];
-export function flatten(a={}){const v={...a,...a.reply,...a.browse};v.share_enabled=a.actions?.owner_share||false;for(const kind of ['reply','private_reply','comment','dynamic','listen'])v[kind+'_enabled']=a.actions?.[kind]||false;for(const [field,kind] of [['daily_browse_limit','browse'],['daily_share_limit','owner_share'],['daily_reply_limit','reply'],['daily_private_reply_limit','private_reply'],['daily_comment_limit','comment'],['daily_dynamic_limit','dynamic']])v[field]=a.daily_limits?.[kind];return v;}
+export function flatten(a={}){const v={...a,...a.reply,...a.browse,...a.expression,...a.models,...a.network,...a.interactions,...a.vision};v.browse_count=a.browse?.count??2;v.share_enabled=a.actions?.owner_share||false;for(const kind of ['reply','private_reply','comment','dynamic','listen'])v[kind+'_enabled']=a.actions?.[kind]||false;for(const [field,kind] of [['daily_browse_limit','browse'],['daily_share_limit','owner_share'],['daily_reply_limit','reply'],['daily_private_reply_limit','private_reply'],['daily_comment_limit','comment'],['daily_dynamic_limit','dynamic']])v[field]=a.daily_limits?.[kind];return v;}

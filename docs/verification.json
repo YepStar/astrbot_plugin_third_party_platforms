@@ -1,13 +1,13 @@
 {
-  "status": "released_0.1.2_enabled_comparison",
+  "status": "released_0.2.0_enabled_comparison",
   "date": "2026-11-11",
-  "tests_passed": 204,
+  "tests_passed": 213,
   "related_suites": {
     "netease_browser": 228,
     "memory_branches": 34,
     "intent_bridge_including_command_tests": 345
   },
-  "total_tests_passed": 811,
+  "total_tests_passed": 820,
   "environment": "isolated /tmp source copies in existing AstrBot container, Python 3.12; outbound model/platform writes mocked",
   "main_import": "passed",
   "python_compile": "passed (workspace-safe cache prefix)",
@@ -19,7 +19,12 @@
     "platform landing schedule and second-level configuration tabs",
     "account browse draft retained across platform switching and saved",
     "schedule adjustment saved",
-    "logs opened only in dedicated inner dialog"
+    "logs opened only in dedicated inner dialog",
+    "24h event ring next to today events, concurrent provider lanes",
+    "XHH topic probe, searchable checkboxes and save",
+    "XHH fallback category mutual exclusion",
+    "scoped storage counters and cleanup preview",
+    "Bili detailed interaction permissions/prompts save and account fields"
   ],
   "platform_network_tests": true,
   "live_deployment": true,
@@ -62,5 +67,18 @@
     "duplicate_profile_create": "rejected without disabling existing profile",
     "fixture_ui": "disabled to standby using connection-page enable button; nicknames distinct from profile IDs",
     "separate_music_identity_facade": "network identity lookup only for explicit UI account checks, not scheduler heartbeat"
+  },
+  "workbench_0_2_live_checks": {
+    "login_ready_all_platforms": true,
+    "xhh_real_topic_count": 94,
+    "xhh_real_feed_verified": true,
+    "storage_status": "passed",
+    "storage_cleanup_preview": "passed; no deletion or cleanup executed",
+    "duplicate_planned_windows": 0,
+    "existing_permissions_and_limits_preserved": true,
+    "additional_legacy_bili_nonsecret_settings": 25,
+    "new_interactions_remain_disabled": true,
+    "old_plugins_retained_disabled": true,
+    "total_legacy_parity": false
   }
 }

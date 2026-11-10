@@ -2,7 +2,9 @@ from dataclasses import asdict
 import time
 from .xhh_client.api_client import XiaoheiheApiClient,SendUncertainError,CredentialInvalidError
 from .xhh_client.models import Credentials,RoutingTarget
-from .xhh_client.topic_service import fetch_topic_feed
+from .xhh_client.topic_service import fetch_topic_feed,fetch_topic_catalog
+from .xhh_client.source_categories import matches
+import asyncio
 from .xhh_client.security import clean_untrusted_text
 from ..core.models import Content,Receipt,Incoming
 from .xhh_client.models import NotificationType,Notification
@@ -26,7 +28,7 @@ class Xiaoheihe:
         if not client.credentials:return {'ready':False,'state':'logged_out'}
         try:await client.check_credentials()
         except CredentialInvalidError:return {'ready':False,'state':'invalid'}
-        return {'ready':True,'state':'valid','nickname':client.credentials.nickname,'uid':client.credentials.uid}
+        return {'ready':True,'state':'valid','nickname':client.credentials.nickname,'uid':client.credentials.uid,'logged_in_at':getattr(client.credentials,'logged_in_at',''),'credential_present':True}
     async def request_login(self,account):
         session=await self.client(account).request_qr();self.qr[account]=session
         return {'url':session.qr_content,'expires_at':session.expires_at}
@@ -39,21 +41,26 @@ class Xiaoheihe:
             self.secrets.write(self.id,account,asdict(credentials));self.qr.pop(account,None)
         return {'state':str(state)}
     async def browse(self,account,options):
-        client=self.client(account);topic=str(options.get('topic_id',''))
-        topics=options.get('topic_ids',[])
-        if not topic and topics:
-            import hashlib
-            index=int(hashlib.sha256(str(options.get('_session_id','')).encode()).hexdigest()[:8],16)%len(topics)
-            topic=str(topics[index])
+        client=self.client(account)
+        topics=options.get('topic_ids',[]) or ([str(options['topic_id'])] if options.get('topic_id') else [])
         if options.get('query'):
             result=await self.search(account,options['query'],max(1,min(3,int(options.get('count',2)))))
             return [Content(self.id,account,row['url'].rsplit('/',1)[-1],row['url'],row['title'],row.get('body_excerpt',''),str(row.get('author_id','')),'text') for row in result['items'] if row['url'].rsplit('/',1)[-1] not in options.get('_skip_ids',[])]
-        page=await fetch_topic_feed(client,topic) if topic else await client.fetch_feed()
+        rows=[];successful=0
+        # A successful empty topic is still a real feed, so never trigger fallback on emptiness.
+        for topic in topics[:20]:
+            try:page=await fetch_topic_feed(client,topic);successful+=1;rows.extend(page.items)
+            except asyncio.CancelledError:raise
+            except Exception:continue
+        if not topics or not successful:
+            page=await client.fetch_feed();rows=[r for r in page.items if matches(r,options.get('fallback_sources',['all']))]
+        seen=set()
         result=[]
         limit=max(1,min(5,int(options.get('count',2))))
-        for row in page.items[:min(15,limit*3)]:
+        for row in rows[:max(30,limit*3)]:
             pid=str(row.get('link_id',row.get('post_id',row.get('id',''))))
-            if not pid.isdigit() or pid in options.get('_skip_ids',[]):continue
+            if not pid.isdigit() or pid in seen or pid in options.get('_skip_ids',[]):continue
+            seen.add(pid)
             full=await client.fetch_thread_context(pid)
             text=clean_untrusted_text(full.body,max_chars=6000)
             if len(text.strip())<30:continue
@@ -61,6 +68,17 @@ class Xiaoheihe:
                 clean_untrusted_text(full.title,max_chars=200),text,str(full.author_uid),'text'))
             if len(result)>=limit:break
         return result
+    async def probe_topics(self,account):
+        client=self.client(account);topics=await fetch_topic_catalog(client)
+        configured=self.options.get('platforms',{}).get(self.id,{}).get('accounts',{}).get(account,{}).get('browse',{}).get('topic_ids',[])
+        ids=list(dict.fromkeys([*configured,*(t['id'] for t in topics[:5])]))[:5]
+        verified='';error='';samples=[]
+        for topic in ids:
+            try:page=await fetch_topic_feed(client,topic,limit=3)
+            except asyncio.CancelledError:raise
+            except Exception as exc:error=type(exc).__name__;continue
+            verified=topic;samples=[{'title':str(r.get('title',''))[:200]} for r in page.items[:3]];error='';break
+        return {'topics':topics,'topic_count':len(topics),'feed_verified':bool(verified),'verified_topic_id':verified,'sample_posts':samples,'feed_error':error,'checked_at':time.time(),'read_only':True}
     async def search(self,account,query,limit=2):
         from .xhh_client.endpoints import EndpointName
         from ..core.research import public_query

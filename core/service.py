@@ -21,6 +21,12 @@ class BrowsingService:
         except BaseException:
             self.store.finish_action(key,Receipt('failed',code='browse_failed'));raise
         for index,content in enumerate(rows):
+            opts=self.executor.policy.account(provider.id,account).get('browse',{})
+            cap=opts.get('video_daily_limit',0)
+            if cap:
+                day=datetime.fromtimestamp(self.clock(),ZoneInfo(self.executor.policy.config.get('timezone','Asia/Shanghai'))).replace(hour=0,minute=0,second=0,microsecond=0).timestamp()
+                with self.store.connect() as db:used=db.execute('SELECT COUNT(*) FROM read_content WHERE provider=? AND account=? AND at>=?',(provider.id,account,day)).fetchone()[0]
+                if used>=cap:break
             self.store.set_setting(f'activity:{provider.id}:{account}',{'task_id':task['id'],'phase':'evaluating','item':index+1,'total':len(rows),'title':content.title[:120],'updated_at':self.clock()})
             if self.clock()>=task['end']:break
             self.executor.policy.permit(provider.id,account,'browse')
@@ -33,6 +39,14 @@ class BrowsingService:
             except (PermissionError,RuntimeError):memory_state='unavailable'
             self.store.set_setting('last_read',{'provider':provider.id,'external_id':content.external_id,'score':evaluation.score,'memory':memory_state})
             if self.clock()>=task['end']:break
+            if provider.id=='bilibili':
+                for action in ('like','coin','favorite','follow'):
+                    if self.clock()>=task['end']:break
+                    try:self.executor.policy.permit(provider.id,account,action,evaluation)
+                    except PermissionError:continue
+                    params={'aid':content.metadata.get('aid',''),'mid':content.author_id}
+                    target=provider.id+':'+account+':'+content.author_id if action=='follow' else content.key
+                    await self.executor.execute(provider.id,account,action,params,action+':'+target,evaluation=evaluation)
             try:self.executor.policy.permit(provider.id,account,'comment',evaluation)
             except PermissionError:pass
             else:

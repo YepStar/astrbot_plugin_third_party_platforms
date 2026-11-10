@@ -13,7 +13,12 @@ class Policy:
         return item
     def permit(self,provider,account,action,evaluation=None):
         item=self.account(provider,account)
-        if action in {'reply','private_reply','comment','dynamic'} and item.get('reply',{}).get('dry_run',False):raise PermissionError('dry_run_enabled')
+        if action in {'reply','private_reply','comment','dynamic','like','coin','favorite','follow'} and item.get('reply',{}).get('dry_run',False):raise PermissionError('dry_run_enabled')
+        if action=='browse' and not item.get('browse',{}).get('browse_enabled',True):raise PermissionError('browsing_disabled')
+        if action in {'like','coin','favorite','follow'}:
+            rules=item.get('interactions',{})
+            if not rules.get(action+'_enabled') or evaluation is None or evaluation.score<rules.get(action+'_min_score',9):raise PermissionError('interaction_score_gate')
+            return item
         if action!='browse' and not item.get('actions',{}).get(action,False):raise PermissionError('action_disabled')
         if action=='comment':
             floor=max(float(self.config.get('comment_min_score',8)),float(item.get('comment_min_score',0)))
@@ -29,4 +34,4 @@ class Policy:
         day=dt.date().isoformat();minute=dt.strftime('%Y-%m-%dT%H:%M')
         return [('all',day,int(self.config.get('daily_limit',20))),
                 ('minute',minute,int(self.config.get('minute_limit',2))),
-                (f'{provider}:{account}:{kind}',day,int(item.get('daily_limits',{}).get(kind,1)))]
+                (f'{provider}:{account}:{kind}',day,int(item.get('interactions',{}).get('interaction_daily_limit',2) if kind in {'like','coin','favorite','follow'} else item.get('daily_limits',{}).get(kind,1)))]

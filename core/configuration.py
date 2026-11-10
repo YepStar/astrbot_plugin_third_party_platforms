@@ -1,7 +1,7 @@
 """Account policy is public state; login credentials are never accepted here."""
 import math,re
 PROVIDERS={'bilibili','xiaoheihe','netease'}
-FIELDS={'share_gap_seconds','dry_run','max_reply_chars','poll_mentions','poll_replies','pools','follow_uids','topic_ids','special_follow_enabled','owner_bili_name','share_delivery','enabled','owner_umo','topic_id','query','share_enabled','share_min_score','reply_enabled','private_reply_enabled',
+FIELDS={'fallback_sources','browse_count','share_gap_seconds','dry_run','max_reply_chars','poll_mentions','poll_replies','pools','follow_uids','topic_ids','special_follow_enabled','owner_bili_name','share_delivery','enabled','owner_umo','topic_id','query','share_enabled','share_min_score','reply_enabled','private_reply_enabled',
  'comment_enabled','comment_min_score','dynamic_enabled','listen_enabled','self_uid','owner_uid','whitelist_mode',
  'user_whitelist','user_blacklist','author_whitelist','author_blacklist','keyword_blacklist','poll_seconds','max_age_seconds',
  'only_explicit_mentions','reply_to_direct_replies','daily_browse_limit','daily_share_limit','daily_reply_limit','daily_comment_limit','daily_private_reply_limit','daily_dynamic_limit','private_scope','private_whitelist','cooldown_seconds','probability_percent','interest_filter','similar_skip','similarity_percent','always_reply_uids'}
@@ -22,6 +22,9 @@ def names(values,key):
  if isinstance(value,str):value=[x.strip() for x in value.replace('，',',').split(',') if x.strip()]
  if not isinstance(value,list) or len(value)>200 or any(not isinstance(x,str) or len(x)>100 for x in value):raise ValueError('invalid_list_setting')
  return value
+
+from .advanced import SPECS,normalize
+FIELDS.update(SPECS)
 
 def account(provider,values,previous=None,*,capabilities=None):
  if (provider not in PROVIDERS and capabilities is None) or not isinstance(values,dict) or values.keys()-FIELDS:raise ValueError('invalid_account_fields')
@@ -53,7 +56,7 @@ def account(provider,values,previous=None,*,capabilities=None):
     'private_reply':number(values.get('daily_private_reply_limit',20),0,1000,True),
     'comment':number(values.get('daily_comment_limit',2),0,100,True),'listen':number(values.get('daily_browse_limit',2),0,100,True),
     'dynamic':number(values.get('daily_dynamic_limit',1),0,20,True)},
-  'browse':{**previous.get('browse',{}),'count':previous.get('browse',{}).get('count',2),'query':text(values,'query'),'topic_id':text(values,'topic_id',80),
+  'browse':{**previous.get('browse',{}),'count':number(values.get('browse_count',previous.get('browse',{}).get('count',2)),1,10,True),'fallback_sources':names(values,'fallback_sources') if 'fallback_sources' in values else previous.get('browse',{}).get('fallback_sources',['all']),'query':text(values,'query'),'topic_id':text(values,'topic_id',80),
     **{key:names(values,key) if key in values else previous.get('browse',{}).get(key,default) for key,default in [('pools',['popular']),('follow_uids',[]),('topic_ids',[])]},
     'special_follow_enabled':flag(values,'special_follow_enabled',previous.get('browse',{}).get('special_follow_enabled',False))},
   'reply':{**previous.get('reply',{}),'dry_run':flag(values,'dry_run'),
@@ -70,8 +73,15 @@ def account(provider,values,previous=None,*,capabilities=None):
     'poll_seconds':number(values.get('poll_seconds',180),60,3600,True),
     'max_age_seconds':number(values.get('max_age_seconds',3600),60,86400,True),
     **{key:names(values,key) for key in ['user_whitelist','user_blacklist','author_whitelist','author_blacklist','keyword_blacklist']}}}
+ for group,extra in normalize(values,previous).items():result[group]={**result.get(group,{}),**extra}
+ if provider!='bilibili' and any(result['interactions'].get(k+'_enabled') for k in ('like','coin','favorite','follow')):raise ValueError('unsupported_platform_action')
  if result['share_delivery'] not in {'qq_private','private_message','comment','both','bili_private_and_qq','all','auto','off'}:raise ValueError('invalid_share_delivery')
  if provider!='bilibili' and result['share_delivery'] not in {'qq_private','off'}:raise ValueError('unsupported_share_delivery')
+ if provider=='xiaoheihe':
+  from ..providers.xhh_client.source_categories import SECTION_ALIASES
+  sources=result['browse']['fallback_sources']
+  if not sources or len(sources)!=len(set(sources)) or set(sources)-SECTION_ALIASES.keys() or ('all' in sources and len(sources)>1):raise ValueError('回退分类需至少选择一项；全部不能与其他分类同时选择')
+  if len(result['browse']['topic_ids'])>20:raise ValueError('真实分区最多选择20项')
  if len(result['browse']['pools'])>8 or not result['browse']['pools']:raise ValueError('invalid_video_pools')
  for key in ['follow_uids','topic_ids']:
   if any(not str(uid).isdigit() for uid in result['browse'][key]):raise ValueError('invalid_platform_identifier')

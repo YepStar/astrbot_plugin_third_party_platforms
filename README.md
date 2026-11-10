@@ -15,7 +15,7 @@
 
 ## 使用
 
-在 AstrBot 用本仓库地址安装，配置模型，再从「（月）第三方平台」查看总览，在顶部切换平台，进入「账号与登录」添加账号并扫码登录。全局规则在总览配置，平台详细策略在二级分页设置。先检查登录与浏览设置，再启动自主活动。抽帧需要 FFmpeg 和可识别图片的视觉模型。
+在 AstrBot 用本仓库地址安装，配置模型，再从「（月）第三方平台」查看总览，在顶部切换平台，进入「账号连接」添加账号并扫码登录。全局规则在总览配置，平台详细策略在二级分页设置。先检查登录与浏览设置，再启动自主活动。抽帧需要 FFmpeg 和可识别图片的视觉模型。
 
 已有旧插件时，先停止旧插件并备份；离线迁移工具是 `scripts/migrate_legacy.py`，默认只预览，写入需要 `--apply --legacy-stopped` 和独立暂存目录。旧数据不会被删除。功能对照和迁移边界见[对比说明](docs/COMPARISON.md)。
 
@@ -33,3 +33,5 @@
 ## 冷月系
 
 由 **YepStar** 维护。可搭配[并行记忆分支](https://github.com/YepStar/astrbot_plugin_memory_branches)、[网易云音乐](https://github.com/YepStar/astrbot_plugin_netease_browser)和[自然意图分析](https://github.com/YepStar/astrbot_plugin_intent_bridge)。自然意图分析把“今晚看看B站”“把小黑盒浏览挪到九点”等日常表达，转换成已授权的功能调用。
+
+日程、平台配置、分区选择与存储说明：[配置与原版对照](docs/CONFIGURATION.md)。
