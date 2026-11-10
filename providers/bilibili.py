@@ -12,6 +12,8 @@ import time
 import uuid
 import hashlib
 from .bili_client.discovery import BiliDiscovery
+from .bili_client.media import FrameSource
+from ..core.media import describe_frames
 
 class CredentialsConfig(dict):
     def __init__(self,values,save):super().__init__(values);self.save=save
@@ -52,7 +54,9 @@ class PoolClient(BiliDiscovery):
 class Bilibili:
     id='bilibili'
     capabilities=frozenset({'search','browse','comment','reply','dynamic','owner_share','private_reply'})
-    def __init__(self,secrets,options):self.secrets=secrets;self.options=options;self.clients={};self.qr={}
+    def __init__(self,secrets,options,*,generate=None,cache_root=None):
+        self.secrets=secrets;self.options=options;self.clients={};self.qr={}
+        self.generate=generate;self.cache_root=cache_root or secrets.root.parent/'media_tmp';self.last_visual={};self.visual_cache={}
     def client(self,account):
         if account not in self.clients:
             cfg=CredentialsConfig(self.secrets.read(self.id,account),lambda v:self.secrets.write(self.id,account,v))
@@ -113,10 +117,36 @@ class Bilibili:
             raw,_=await client._http_get('https://api.bilibili.com/x/web-interface/view',params={'bvid':bv})
             if raw.get('code')!=0:continue
             info=raw['data'];text=await client._get_video_subtitles(bv,info.get('cid'))
+            visual=await self.visual(account,info,text)
             mode='subtitle' if text else 'description';text=text or str(info.get('desc',''))
+            if visual:
+                text=text[:9000]+'\n'+visual['text'];mode='subtitle_and_sparse_frames' if mode=='subtitle' else 'sparse_frames'
             results.append(Content(self.id,account,bv,f'https://www.bilibili.com/video/{bv}',str(info.get('title','')),text,
                 str(info.get('owner',{}).get('mid','')),mode,{'aid':info.get('aid')}))
         return results
+    async def visual(self,account,info,subtitles=''):
+        policy=self.options.get('vision_policy','when_text_insufficient')
+        if policy not in {'off','when_text_insufficient','always'}:raise ValueError('invalid_vision_policy')
+        if policy=='off' or (policy=='when_text_insufficient' and len(subtitles.strip())>=40):return None
+        if self.generate is None:
+            self.last_visual={'state':'unavailable','code':'vision_generator_unconfigured'};return None
+        bvid=info.get('bvid','');key=(account,bvid,str(self.options.get('model_ids',{}).get('video_frames','')),self.options.get('vision_frame_count',5))
+        cached=self.visual_cache.get(key)
+        if cached and cached[0]>time.time():return cached[1]
+        try:
+            async with asyncio.timeout(240):
+                source=FrameSource(self.cache_root,self.client(account).config,self.options)
+                async with source.capture(bvid) as frames:
+                    result=await describe_frames(self.generate,frames,{'provider':self.id,'external_id':bvid,
+                        'title':str(info.get('title',''))[:300],'description':str(info.get('desc',''))[:800]})
+            if len(self.visual_cache)>=50:self.visual_cache.pop(next(iter(self.visual_cache)))
+            self.visual_cache[key]=(time.time()+3600,result)
+            self.last_visual={'state':'observed','external_id':bvid,'frames':result['observed_frames'],'sample_seconds':result['sample_seconds']}
+            return result
+        except Exception as exc:
+            self.last_visual={'state':'unavailable','external_id':bvid,'code':type(exc).__name__}
+            return None
+
     async def search(self,account,query,limit=2):
         from ..core.research import public_query
         rows=await self.browse(account,{'query':public_query(query),'count':max(1,min(3,int(limit)))})
@@ -218,12 +248,13 @@ class Bilibili:
         if not info:raise RuntimeError('reply_source_unavailable')
         subtitles=await client._get_video_subtitles(info.get('bvid',''),info.get('cid',0))
         comments=await client._get_hot_comments(oid,limit=5)
-        return {'text':json.dumps({'source_kind':'video_subtitles_and_description' if subtitles else 'video_description_only',
+        visual=await self.visual(event.account,info,subtitles)
+        return {'text':json.dumps({'source_kind':('subtitle_and_sparse_frames' if subtitles else 'sparse_frames') if visual else ('video_subtitles_and_description' if subtitles else 'video_description_only'),
             'video_author':{'uid':str(info.get('owner_mid','')),'name':info.get('owner_name','')},
             'title':info.get('title',''),'description':str(info.get('desc',''))[:3000],
-            'subtitles':str(subtitles)[:8000],'other_commenters':comments,
+            'subtitles':str(subtitles)[:8000],'visual_observations':visual['text'] if visual else '', 'other_commenters':comments,
             'trigger_comment_id':route.get('parent',''),'root_comment_id':route.get('root',''),
-            'identity_rule':'The video author, trigger sender and other commenters are separate people. Do not claim to have watched or heard the video.'},ensure_ascii=False),
+            'identity_rule':'The video author, trigger sender and other commenters are separate people. Refer only to the supplied subtitle/description and explicitly sampled frames if present. No audio or continuous viewing may be claimed.'},ensure_ascii=False),
             'images':[],'warnings':[] if subtitles else ['No subtitles available; use description evidence only.']}
 
-    async def close(self):self.clients.clear();self.qr.clear()
+    async def close(self):self.clients.clear();self.qr.clear();self.visual_cache.clear()

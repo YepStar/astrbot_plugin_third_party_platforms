@@ -9,7 +9,9 @@ class PublicMemoryGateway:
         self.context,self.enabled,self.store,self.clock=context,enabled,store,clock
     def active(self):return bool(self.enabled() if callable(self.enabled) else self.enabled)
     def facade(self):
-        metadata=self.context.get_registered_star('astrbot_plugin_memory_branches')
+        lookup=getattr(self.context,'get_registered_star',None)
+        if not callable(lookup):return None
+        metadata=lookup('astrbot_plugin_memory_branches')
         if metadata is None or getattr(metadata,'activated',True) is False:return None
         return getattr(getattr(metadata,'star_cls',None),'public_memory',None)
     def _write(self,content,evaluation):

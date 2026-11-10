@@ -109,5 +109,20 @@
     "type": "dict",
     "description": "按任务指定模型，留空沿用统一模型",
     "default": {}
+  },
+  "vision_policy": {
+    "type": "string",
+    "description": "视频画面分析：off / when_text_insufficient / always",
+    "default": "when_text_insufficient"
+  },
+  "vision_frame_count": {
+    "type": "int",
+    "description": "每次最多采样多少幅画面（1至12）",
+    "default": 5
+  },
+  "vision_max_mb": {
+    "type": "int",
+    "description": "视频下载大小上限（MB，8至256）",
+    "default": 96
   }
 }
