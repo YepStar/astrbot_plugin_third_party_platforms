@@ -1,0 +1,2151 @@
+{
+  "bilibili_ai_bot": {
+    "main.py": {
+      "sha256": "738360e44a5d4c6735ecfd088edbdb160c94890293419e2e4485a94f2c46474e",
+      "classes": [
+        "BiliBiliBot"
+      ],
+      "registered_handlers": [
+        {
+          "name": "on_group_bili_share",
+          "decorators": [
+            "filter.event_message_type(filter.EventMessageType.GROUP_MESSAGE, priority=850)"
+          ]
+        },
+        {
+          "name": "on_private_bili_share",
+          "decorators": [
+            "filter.event_message_type(filter.EventMessageType.PRIVATE_MESSAGE, priority=850)"
+          ]
+        },
+        {
+          "name": "cmd_bili_parse",
+          "decorators": [
+            "filter.command('bili解析')"
+          ]
+        },
+        {
+          "name": "cmd_login",
+          "decorators": [
+            "filter.permission_type(filter.PermissionType.ADMIN)",
+            "filter.command('bili登录')"
+          ]
+        },
+        {
+          "name": "cmd_login_confirm",
+          "decorators": [
+            "filter.permission_type(filter.PermissionType.ADMIN)",
+            "filter.command('bili确认')"
+          ]
+        },
+        {
+          "name": "cmd_status",
+          "decorators": [
+            "filter.command('bili状态')"
+          ]
+        },
+        {
+          "name": "cmd_live_danmaku",
+          "decorators": [
+            "filter.permission_type(filter.PermissionType.ADMIN)",
+            "filter.command('bili直播')"
+          ]
+        },
+        {
+          "name": "cmd_schedule",
+          "decorators": [
+            "filter.command('bili计划')"
+          ]
+        },
+        {
+          "name": "cmd_regions",
+          "decorators": [
+            "filter.command('bili分区')"
+          ]
+        },
+        {
+          "name": "cmd_start",
+          "decorators": [
+            "filter.permission_type(filter.PermissionType.ADMIN)",
+            "filter.command('bili启动')"
+          ]
+        },
+        {
+          "name": "cmd_stop",
+          "decorators": [
+            "filter.permission_type(filter.PermissionType.ADMIN)",
+            "filter.command('bili停止')"
+          ]
+        },
+        {
+          "name": "cmd_proactive",
+          "decorators": [
+            "filter.permission_type(filter.PermissionType.ADMIN)",
+            "filter.command('bili主动')"
+          ]
+        },
+        {
+          "name": "cmd_toggle",
+          "decorators": [
+            "filter.permission_type(filter.PermissionType.ADMIN)",
+            "filter.command('bili开关')"
+          ]
+        },
+        {
+          "name": "cmd_refresh_cookie",
+          "decorators": [
+            "filter.permission_type(filter.PermissionType.ADMIN)",
+            "filter.command('bili刷新')"
+          ]
+        },
+        {
+          "name": "cmd_memory",
+          "decorators": [
+            "filter.command('bili记忆')"
+          ]
+        },
+        {
+          "name": "cmd_consolidation",
+          "decorators": [
+            "filter.permission_type(filter.PermissionType.ADMIN)",
+            "filter.command('bili清算')"
+          ]
+        },
+        {
+          "name": "cmd_weekly_summary",
+          "decorators": [
+            "filter.permission_type(filter.PermissionType.ADMIN)",
+            "filter.command('bili周总结')"
+          ]
+        },
+        {
+          "name": "cmd_cleanup_aged",
+          "decorators": [
+            "filter.permission_type(filter.PermissionType.ADMIN)",
+            "filter.command('bili清理老化')"
+          ]
+        },
+        {
+          "name": "cmd_memory_integration",
+          "decorators": [
+            "filter.command('bili联动')"
+          ]
+        },
+        {
+          "name": "cmd_migrate_memory",
+          "decorators": [
+            "filter.command('bili迁移记忆')"
+          ]
+        },
+        {
+          "name": "cmd_affection",
+          "decorators": [
+            "filter.command('bili好感')"
+          ]
+        },
+        {
+          "name": "cmd_block",
+          "decorators": [
+            "filter.permission_type(filter.PermissionType.ADMIN)",
+            "filter.command('bili拉黑')"
+          ]
+        },
+        {
+          "name": "cmd_unblock",
+          "decorators": [
+            "filter.permission_type(filter.PermissionType.ADMIN)",
+            "filter.command('bili解黑')"
+          ]
+        },
+        {
+          "name": "cmd_blocklist",
+          "decorators": [
+            "filter.command('bili黑名单')"
+          ]
+        },
+        {
+          "name": "cmd_cleanup",
+          "decorators": [
+            "filter.permission_type(filter.PermissionType.ADMIN)",
+            "filter.command('bili清理')"
+          ]
+        },
+        {
+          "name": "cmd_personality",
+          "decorators": [
+            "filter.command('bili性格')"
+          ]
+        },
+        {
+          "name": "cmd_interest",
+          "decorators": [
+            "filter.permission_type(filter.PermissionType.ADMIN)",
+            "filter.command('bili兴趣')"
+          ]
+        },
+        {
+          "name": "cmd_personality_edit",
+          "decorators": [
+            "filter.permission_type(filter.PermissionType.ADMIN)",
+            "filter.command('bili性格编辑')"
+          ]
+        },
+        {
+          "name": "cmd_personality_delete",
+          "decorators": [
+            "filter.permission_type(filter.PermissionType.ADMIN)",
+            "filter.command('bili性格删除')"
+          ]
+        },
+        {
+          "name": "cmd_personality_rollback",
+          "decorators": [
+            "filter.command('bili性格回滚')"
+          ]
+        },
+        {
+          "name": "cmd_test_comment_context",
+          "decorators": [
+            "filter.permission_type(filter.PermissionType.ADMIN)",
+            "filter.command('bili测试查询')"
+          ]
+        },
+        {
+          "name": "cmd_daily_log",
+          "decorators": [
+            "filter.command('bili日志')"
+          ]
+        },
+        {
+          "name": "cmd_permanent_memory",
+          "decorators": [
+            "filter.permission_type(filter.PermissionType.ADMIN)",
+            "filter.command('bili永久记忆')"
+          ]
+        },
+        {
+          "name": "cmd_dynamic",
+          "decorators": [
+            "filter.permission_type(filter.PermissionType.ADMIN)",
+            "filter.command('bili动态')"
+          ]
+        },
+        {
+          "name": "cmd_watch_bangumi",
+          "decorators": [
+            "filter.permission_type(filter.PermissionType.ADMIN)",
+            "filter.command('bili看番')"
+          ]
+        },
+        {
+          "name": "cmd_bangumi_memory",
+          "decorators": [
+            "filter.command('bili番剧记忆')"
+          ]
+        },
+        {
+          "name": "cmd_umo",
+          "decorators": [
+            "filter.permission_type(filter.PermissionType.ADMIN)",
+            "filter.command('biliUMO')"
+          ]
+        },
+        {
+          "name": "cmd_help",
+          "decorators": [
+            "filter.command('bili帮助')"
+          ]
+        },
+        {
+          "name": "cmd_bind",
+          "decorators": [
+            "filter.command('bili绑定')"
+          ]
+        },
+        {
+          "name": "cmd_unbind",
+          "decorators": [
+            "filter.command('bili解绑')"
+          ]
+        },
+        {
+          "name": "inject_bili_memory",
+          "decorators": [
+            "filter.on_llm_request()"
+          ]
+        }
+      ]
+    },
+    "core/video_diagnostics.py": {
+      "sha256": "5875509ec80fc768454e863b8b1a178040490629555e7a742b56e6dc46e845eb",
+      "classes": [],
+      "registered_handlers": []
+    },
+    "core/personality.py": {
+      "sha256": "c00e27e9d37c808d27219984f3f162e5bcca779534d9124788b7f6eba7d8e0d5",
+      "classes": [
+        "PersonalityMixin"
+      ],
+      "registered_handlers": [
+        {
+          "name": "_short",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_bounded_list",
+          "decorators": [
+            "classmethod"
+          ]
+        },
+        {
+          "name": "_normalize_dynamic_block",
+          "decorators": [
+            "classmethod"
+          ]
+        },
+        {
+          "name": "_normalize_personality_state",
+          "decorators": [
+            "classmethod"
+          ]
+        },
+        {
+          "name": "_meme_is_active",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_meme_exposed_for_context",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_qualified_feedback",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_normalized_phrase",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_snapshot",
+          "decorators": [
+            "staticmethod"
+          ]
+        }
+      ]
+    },
+    "core/recommendation_routing.py": {
+      "sha256": "6afebcb67f35ef7ec162b38639cdc0105d5949635b324f5b1fca8c21a89519e8",
+      "classes": [],
+      "registered_handlers": []
+    },
+    "core/video_discovery.py": {
+      "sha256": "217f1c40dc0b1c2db3c755d36fa338fb8eb603adff3fadfed60007a659903a95",
+      "classes": [],
+      "registered_handlers": []
+    },
+    "core/weekly.py": {
+      "sha256": "21f1db1ef79c64f44fb9ca4abdddc248e1ce86d264021ae9d46566632657ea93",
+      "classes": [
+        "WeeklySummaryMixin"
+      ],
+      "registered_handlers": [
+        {
+          "name": "_weekly_excerpt",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_activity_time",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_empty_activity_data",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_preference_label",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_format_daily_structures",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_weekly_font_has_chinese",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_strip_weekly_emoji",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_clean_weekly_render_text",
+          "decorators": [
+            "classmethod"
+          ]
+        },
+        {
+          "name": "_text_width",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_rounded_rect",
+          "decorators": [
+            "staticmethod"
+          ]
+        }
+      ]
+    },
+    "core/config.py": {
+      "sha256": "5571a6de5abf014215379fa061eef016299e5a61d0419ec14ec044bfa34053c5",
+      "classes": [],
+      "registered_handlers": []
+    },
+    "core/vision.py": {
+      "sha256": "75fc1f7f66f950bfa35fb37702ea042468161fae80325f4a110b74d906785b5c",
+      "classes": [
+        "VisionMixin"
+      ],
+      "registered_handlers": [
+        {
+          "name": "_cosine_similarity",
+          "decorators": [
+            "staticmethod"
+          ]
+        }
+      ]
+    },
+    "core/memory.py": {
+      "sha256": "ad21c9f2f77a17b0d3a1208864d4518b31e68bba5037817b5da7a13e31a26119",
+      "classes": [
+        "MemoryMixin"
+      ],
+      "registered_handlers": [
+        {
+          "name": "_memory_timestamp",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_memory_backup_records",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_is_derived_memory",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_derived_memory_id",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_legacy_summary_depends_on",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_memory_type_label",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_reader_scope_for_channel",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_format_conversation_turn",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_format_oid_memories_grouped",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_format_memory_with_meta",
+          "decorators": [
+            "staticmethod"
+          ]
+        }
+      ]
+    },
+    "core/event_adapter.py": {
+      "sha256": "1dff27fa29a29d3a7a9f38dcae0959ecbaa05d0233e9337710f76f3cdc03b0c0",
+      "classes": [
+        "EventAdapter"
+      ],
+      "registered_handlers": [
+        {
+          "name": "_numeric_id",
+          "decorators": [
+            "staticmethod"
+          ]
+        }
+      ]
+    },
+    "core/bangumi.py": {
+      "sha256": "90333f6e2e668fbcba87aaf6a42b5653c75431cbdfd48d3d3aeb54d46ca617ce",
+      "classes": [
+        "BangumiMixin"
+      ],
+      "registered_handlers": [
+        {
+          "name": "_pgc_ok",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_sort_eps_by_index",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_find_missing_eps",
+          "decorators": [
+            "staticmethod"
+          ]
+        }
+      ]
+    },
+    "core/proactive.py": {
+      "sha256": "19634c7b0214949d557ae1994dacfe093c777fe2482e92f931f3b94ab79de5d2",
+      "classes": [
+        "ProactiveMixin"
+      ],
+      "registered_handlers": [
+        {
+          "name": "_normalize_zone_name",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_split_pool_spec",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_proactive_source_quotas",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_proactive_batch_source_quotas",
+          "decorators": [
+            "classmethod"
+          ]
+        },
+        {
+          "name": "_proactive_log_source",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_today_proactive_comment_count",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_parse_proactive_search_queries",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_is_owner_recommend_action",
+          "decorators": [
+            "staticmethod"
+          ]
+        }
+      ]
+    },
+    "core/video_inspection.py": {
+      "sha256": "0e1e4ce9f8d30021d7960f38f22d111fbb8bb5b6c195395438832eae8e5423d2",
+      "classes": [
+        "VideoInspectionMixin"
+      ],
+      "registered_handlers": []
+    },
+    "core/shared_memory_backend.py": {
+      "sha256": "3e1b7df14e3be477dccca12eaeffd24047db9d817843357a0fa83829a2327a59",
+      "classes": [],
+      "registered_handlers": []
+    },
+    "core/consolidation.py": {
+      "sha256": "660eec04b6c04a4e3c8c7d401e2b191b20dad7fb2db6eab74a9c22a1af8813fa",
+      "classes": [
+        "ConsolidationEngine"
+      ],
+      "registered_handlers": [
+        {
+          "name": "_number",
+          "decorators": [
+            "staticmethod"
+          ]
+        }
+      ]
+    },
+    "core/tools.py": {
+      "sha256": "fc54d46a3865e2a7dea2e01c5ea467e5b697d83449659ebe06700430b8f0dc59",
+      "classes": [
+        "RecallUserTool",
+        "RecallConversationTool",
+        "RecallTodayTool",
+        "RecallVideoTool",
+        "RecallDynamicTool",
+        "RecallBangumiTool",
+        "ParseBiliShareTool",
+        "SearchBilibiliTool",
+        "GetUpInfoTool",
+        "WatchVideoTool",
+        "WatchAndShareVideoPrivateTool",
+        "PostCommentTool",
+        "LikeVideoTool",
+        "CoinVideoTool",
+        "FavVideoTool",
+        "FollowUpTool",
+        "CheckFollowingUpdatesTool",
+        "CheckFollowingLiveTool",
+        "WatchVideosTool",
+        "GetBangumiInfoTool",
+        "GetBangumiTrendingTool",
+        "GetBangumiTimelineTool",
+        "GetBangumiUpdatesTool",
+        "WatchBangumiTool",
+        "BlockBiliUserTool",
+        "RecallBiliTool",
+        "BiliActionTool",
+        "BiliBangumiTool"
+      ],
+      "registered_handlers": []
+    },
+    "core/private_messages.py": {
+      "sha256": "d9f35d275e74323792497dfa68d3dbaca0d5b132bdd409766e9c573d961208a4",
+      "classes": [
+        "PrivateSafetyDecision",
+        "PrivateMessageMixin"
+      ],
+      "registered_handlers": [
+        {
+          "name": "_default_private_message_state",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_private_json_text",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_private_message_content",
+          "decorators": [
+            "classmethod"
+          ]
+        },
+        {
+          "name": "_private_shared_video_id",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_private_bili_fallback_query",
+          "decorators": [
+            "staticmethod"
+          ]
+        }
+      ]
+    },
+    "core/__init__.py": {
+      "sha256": "08214a4368dd8d39dad66f6140e126ace2d2583838c19891c024cef247aa2ca8",
+      "classes": [],
+      "registered_handlers": []
+    },
+    "core/llm.py": {
+      "sha256": "e2a6b7bf2071828c43a2f151114d56552b00b6b7da68d0d4fbb611caab7299d0",
+      "classes": [
+        "LLMMixin"
+      ],
+      "registered_handlers": []
+    },
+    "core/humanism_context.py": {
+      "sha256": "b70540beaa1b6f1449d84b5e28225db5cf33e4ffa3adc04ce10cf3de627de7d5",
+      "classes": [],
+      "registered_handlers": []
+    },
+    "core/runtime.py": {
+      "sha256": "490db1939f67c74c754493f97a1aba61b7aeedd0625a4cb0e8e1e86d9caf35ac",
+      "classes": [
+        "EventPriority",
+        "EventState",
+        "ActionState",
+        "InboundEvent",
+        "ActionRequest",
+        "EventClaim",
+        "ActionOutcome",
+        "_EventRecord",
+        "_ActionRecord",
+        "EventRuntime"
+      ],
+      "registered_handlers": [
+        {
+          "name": "key",
+          "decorators": [
+            "property"
+          ]
+        },
+        {
+          "name": "priority_name",
+          "decorators": [
+            "property"
+          ]
+        },
+        {
+          "name": "event_sort_key",
+          "decorators": [
+            "staticmethod"
+          ]
+        }
+      ]
+    },
+    "core/output_protocol.py": {
+      "sha256": "32c15cc55a6dad74dbb461208a6e41938b1c7b537d82782a2440d029d2f18c5d",
+      "classes": [
+        "ReplyProtocolError"
+      ],
+      "registered_handlers": []
+    },
+    "core/dynamic.py": {
+      "sha256": "1947667898f3c940f99015208996594735017be5cf5a712413edaa37b13d2a30",
+      "classes": [
+        "DynamicMixin"
+      ],
+      "registered_handlers": [
+        {
+          "name": "_decode_novelai_image",
+          "decorators": [
+            "staticmethod"
+          ]
+        }
+      ]
+    },
+    "core/content_protocol.py": {
+      "sha256": "195119536e44e2a723938e6d3df8387d61bc0efc6b5e3322cf26b4535ca57b12",
+      "classes": [
+        "ContentProtocolError"
+      ],
+      "registered_handlers": []
+    },
+    "core/video_evaluation.py": {
+      "sha256": "34c0ff9540ea8e5465a1b0f69c9e78633658e9091347d943fbfb4d9a1528ac01",
+      "classes": [
+        "VideoEvaluationError"
+      ],
+      "registered_handlers": []
+    },
+    "core/utils.py": {
+      "sha256": "4df181ddc77ce51557fc72e7b65b33f9c3ea21c16d00efef8afe6d87cdc176c0",
+      "classes": [
+        "UtilsMixin"
+      ],
+      "registered_handlers": [
+        {
+          "name": "_normalize_openai_base_url",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_path_size",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_repair_llm_json",
+          "decorators": [
+            "staticmethod"
+          ]
+        }
+      ]
+    },
+    "core/share.py": {
+      "sha256": "dd7dc518068d0d1e6945dc289ae49ab303d7acbe73e9aa89bc1f0ecfbcc0d7cb",
+      "classes": [
+        "ShareMixin"
+      ],
+      "registered_handlers": [
+        {
+          "name": "_is_allowed_share_host",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_format_duration",
+          "decorators": [
+            "staticmethod"
+          ]
+        }
+      ]
+    },
+    "core/affection.py": {
+      "sha256": "2e5f37381aea67e00ede6498c0d809f10774aad245befffb597d022d6e4ad237",
+      "classes": [
+        "AffectionMixin"
+      ],
+      "registered_handlers": [
+        {
+          "name": "_is_blocked",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_wrap_user_content",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_normalize_user_profile",
+          "decorators": [
+            "staticmethod"
+          ]
+        }
+      ]
+    },
+    "core/schedule_mixin.py": {
+      "sha256": "c1e1653c094f0c8912fa78e7a8a2679abd2d0da90b6a586a8e45535c14e5d8c1",
+      "classes": [
+        "ScheduleMixin"
+      ],
+      "registered_handlers": [
+        {
+          "name": "_parse_time_value",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_parse_window_value",
+          "decorators": [
+            "classmethod"
+          ]
+        },
+        {
+          "name": "_minute_text",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_schedule_slot_due",
+          "decorators": [
+            "classmethod"
+          ]
+        },
+        {
+          "name": "_format_time_pairs",
+          "decorators": [
+            "staticmethod"
+          ]
+        }
+      ]
+    },
+    "core/bilibili.py": {
+      "sha256": "260666b5fe023bd73d6bfb52974d08eaa81aabf055ee1c7ce7afe84936979722",
+      "classes": [
+        "BilibiliAPIMixin"
+      ],
+      "registered_handlers": []
+    },
+    "core/network.py": {
+      "sha256": "c5549437f0b163afb058c0430ae3f8301d0c7a24de4318aa945008c8a4ffeff7",
+      "classes": [
+        "_ProxySession"
+      ],
+      "registered_handlers": [
+        {
+          "name": "plugin_http_session",
+          "decorators": [
+            "asynccontextmanager"
+          ]
+        }
+      ]
+    },
+    "core/behavior_budget.py": {
+      "sha256": "5f8f689580b4045fc18f92e767227af6eeaad1bb30e69fd306fccc1b03d5e1b0",
+      "classes": [
+        "BudgetReservation",
+        "BehaviorBudget"
+      ],
+      "registered_handlers": [
+        {
+          "name": "window_keys",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_effective_limit",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "refund_in_transaction",
+          "decorators": [
+            "staticmethod"
+          ]
+        }
+      ]
+    },
+    "core/comment_context.py": {
+      "sha256": "d960fbc85a6a6708d3dfa8a6f4e4527a6d4fe44f68f23c9db6896de71fec189b",
+      "classes": [
+        "CommentContextMixin"
+      ],
+      "registered_handlers": [
+        {
+          "name": "_format_comment_context_record",
+          "decorators": [
+            "staticmethod"
+          ]
+        }
+      ]
+    },
+    "core/memory_api.py": {
+      "sha256": "c3250668e7efad813f61bf79cd4581fb8e4c130f6fad389e0550f8441a8b89a8",
+      "classes": [
+        "BiliBotMemoryAPI"
+      ],
+      "registered_handlers": []
+    },
+    "core/live_danmaku.py": {
+      "sha256": "9b4890aaeecbc609dd40a726c506612fe9f627a58d6c0350cb0e7259be879ee9",
+      "classes": [
+        "LiveDanmakuMixin"
+      ],
+      "registered_handlers": [
+        {
+          "name": "_live_event_key",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_normalize_live_text",
+          "decorators": [
+            "staticmethod"
+          ]
+        }
+      ]
+    },
+    "core/search.py": {
+      "sha256": "26d4d129143353c3f8b49d0712bbec2f2546cd50a4a22b0aeb9366dffddee162",
+      "classes": [
+        "WebSearchMixin"
+      ],
+      "registered_handlers": [
+        {
+          "name": "_format_firecrawl_results",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_format_grok_response",
+          "decorators": [
+            "staticmethod"
+          ]
+        }
+      ]
+    },
+    "core/reply.py": {
+      "sha256": "730a3da5abb6daee9703583d63bbf1abd334bce8de6e1724a28391f2d4448821",
+      "classes": [
+        "ReplyMixin"
+      ],
+      "registered_handlers": [
+        {
+          "name": "_normalized_interaction_text",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_matches_ad_pattern",
+          "decorators": [
+            "classmethod"
+          ]
+        }
+      ]
+    },
+    "core/webui_bridge.py": {
+      "sha256": "d8fffaec1c3c1ed8780004a185e800a4b675733db6a337bf701874400eaceb68",
+      "classes": [],
+      "registered_handlers": []
+    },
+    "core/video.py": {
+      "sha256": "ada2419b0604c729a1a12f7b94e71884adf2e12c8b607f44cb3829f6d338ff11",
+      "classes": [
+        "VideoMixin"
+      ],
+      "registered_handlers": [
+        {
+          "name": "_clip_media_text",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_analysis_has_subtitle_mismatch",
+          "decorators": [
+            "staticmethod"
+          ]
+        }
+      ]
+    },
+    "core/layered_runtime.py": {
+      "sha256": "26f6f6b841c5ca0c53583e0c13c60f44036856d80ce8b5d5908ee2c16a06b576",
+      "classes": [
+        "LayeredRuntime"
+      ],
+      "registered_handlers": [
+        {
+          "name": "is_open",
+          "decorators": [
+            "property"
+          ]
+        },
+        {
+          "name": "_platform_name",
+          "decorators": [
+            "staticmethod"
+          ]
+        }
+      ]
+    },
+    "core/schedule/tasks.py": {
+      "sha256": "18d17e6817fdd11f3991bd905831e89269834e8203ff703dec5246c3da80e584",
+      "classes": [
+        "ScheduledTasks"
+      ],
+      "registered_handlers": [
+        {
+          "name": "_near",
+          "decorators": [
+            "staticmethod"
+          ]
+        }
+      ]
+    },
+    "core/schedule/__init__.py": {
+      "sha256": "bb13d129f6bc6190a385461f2527aa88216c526fc6522382c77802a6eac46083",
+      "classes": [],
+      "registered_handlers": []
+    },
+    "core/security/scopes.py": {
+      "sha256": "f2afcbaaa93779ba90b549393f5e5e22aebec616e522799a735720c646a192cd",
+      "classes": [
+        "Scope",
+        "ScopePolicy",
+        "SessionKey"
+      ],
+      "registered_handlers": [
+        {
+          "name": "parse",
+          "decorators": [
+            "staticmethod"
+          ]
+        }
+      ]
+    },
+    "core/security/toolgate.py": {
+      "sha256": "07ef496a83c66c4a3a6dff76fe3d485a881ae07263944807ab788aa883d0c4cf",
+      "classes": [
+        "Tier",
+        "ToolSpec",
+        "Decision",
+        "ToolGate"
+      ],
+      "registered_handlers": []
+    },
+    "core/security/__init__.py": {
+      "sha256": "39118375130f976e4828fff5dba1e72ea92a6c635765b9f51a5c5a31e9ef3745",
+      "classes": [],
+      "registered_handlers": []
+    },
+    "core/security/capability.py": {
+      "sha256": "00c5f3a098d3e69bbb5bba07096669eb44c8e8b2a4775ed71eed29cf0a04aa32",
+      "classes": [
+        "CapabilityError",
+        "ActionDigest",
+        "Capability",
+        "CapabilityStore",
+        "PendingConfirmations"
+      ],
+      "registered_handlers": [
+        {
+          "name": "args_hash",
+          "decorators": [
+            "property"
+          ]
+        },
+        {
+          "name": "digest",
+          "decorators": [
+            "property"
+          ]
+        },
+        {
+          "name": "_key",
+          "decorators": [
+            "staticmethod"
+          ]
+        }
+      ]
+    },
+    "core/security/redact.py": {
+      "sha256": "f9524bd5bf2229d196b6b7b5bdcbfc1b366bfc2d24b00fc672dd424bcfa47312",
+      "classes": [
+        "SanitizeResult"
+      ],
+      "registered_handlers": [
+        {
+          "name": "suspicious",
+          "decorators": [
+            "property"
+          ]
+        },
+        {
+          "name": "hostile",
+          "decorators": [
+            "property"
+          ]
+        }
+      ]
+    },
+    "core/security/identity.py": {
+      "sha256": "6b36cbee689719eb52010d891fb462a1bfd1bfb055f4d7f6e5f1f72e385378c1",
+      "classes": [
+        "Role",
+        "Caller",
+        "IdentityResolver"
+      ],
+      "registered_handlers": [
+        {
+          "name": "is_admin",
+          "decorators": [
+            "property"
+          ]
+        },
+        {
+          "name": "is_blocked",
+          "decorators": [
+            "property"
+          ]
+        },
+        {
+          "name": "platform",
+          "decorators": [
+            "property"
+          ]
+        }
+      ]
+    },
+    "core/adapter/events.py": {
+      "sha256": "84a3a237e31e157f190d657dbee3c89c4db83415962d227423645f867f289be7",
+      "classes": [
+        "EventState",
+        "InboundEvent",
+        "EventAdapter",
+        "ActionRequest",
+        "ActionRegistry"
+      ],
+      "registered_handlers": []
+    },
+    "core/adapter/__init__.py": {
+      "sha256": "362f527e6102a0a682e11669062c287f3cef80eb77b974e800ce99c2c7c5b090",
+      "classes": [],
+      "registered_handlers": []
+    },
+    "core/storage/db.py": {
+      "sha256": "490dee57f5a4a440a07bce1a142b92e2ae784ca13549a2cc4d93e983fc163ed3",
+      "classes": [
+        "Database"
+      ],
+      "registered_handlers": [
+        {
+          "name": "_migrate_schema_sync",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "is_open",
+          "decorators": [
+            "property"
+          ]
+        }
+      ]
+    },
+    "core/storage/__init__.py": {
+      "sha256": "1fc0e5fbbb99b51b3a3c1914e9806a92944c9453c58eebc123c1350c6196763e",
+      "classes": [],
+      "registered_handlers": []
+    },
+    "core/storage/stores.py": {
+      "sha256": "6fe3263e05670f9b4a83ff2d6999f4494c75c0d124c612084a1f75053e31b306",
+      "classes": [
+        "Memory",
+        "Profile",
+        "ProfileFact",
+        "SeenVideo",
+        "SeenVideoStore",
+        "FeedbackStore",
+        "PreferenceStore",
+        "MemoryStore",
+        "ProfileStore",
+        "MediaDigest",
+        "MediaStore"
+      ],
+      "registered_handlers": [
+        {
+          "name": "normalize_bvid",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_number",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_mark_sync",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_relevance_terms",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_clean",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_key",
+          "decorators": [
+            "classmethod"
+          ]
+        },
+        {
+          "name": "_week_starts",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_max_consecutive_weeks",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_vector_blob",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_vector_list",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_legacy_payload",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_number",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_legacy_row",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_upsert_legacy_sync",
+          "decorators": [
+            "staticmethod"
+          ]
+        }
+      ]
+    },
+    "core/extensions/dispatcher.py": {
+      "sha256": "cadeecb1aed47c0a75111a0ae06ba82bdf46fcb26321f78018b6fdc5bf8c92c0",
+      "classes": [
+        "ExtensionDispatcher"
+      ],
+      "registered_handlers": []
+    },
+    "core/extensions/registry.py": {
+      "sha256": "25a1624bcc22d9ead3ab719e489b8ffca2c6bc98e97070eba330662123142fec",
+      "classes": [
+        "RegisteredExtension",
+        "ExtensionRegistry",
+        "_Logger"
+      ],
+      "registered_handlers": []
+    },
+    "core/extensions/host_api.py": {
+      "sha256": "d113f9e8527f0f5bba16d8a73bc8183939fbee74a42daff68fbb152535b7f49d",
+      "classes": [
+        "BiliBotExtensionHostAPI"
+      ],
+      "registered_handlers": [
+        {
+          "name": "extension_id",
+          "decorators": [
+            "property"
+          ]
+        }
+      ]
+    },
+    "core/extensions/__init__.py": {
+      "sha256": "f93ef6f297d96f748a4896a9034228c588bbaf6849f3db0950526482625b1db5",
+      "classes": [],
+      "registered_handlers": []
+    },
+    "core/extensions/contracts.py": {
+      "sha256": "17b427dc1409e4888fa3c6c4841c394fd0e5d55f9369a310e3f6227f54ff3ff0",
+      "classes": [
+        "HostContractError"
+      ],
+      "registered_handlers": []
+    },
+    "core/extensions/permissions.py": {
+      "sha256": "02d9b57c2317b4770fadd23c35e7bd33b6d7fc09f4e08df9025acb4b0cd3691a",
+      "classes": [
+        "ExtensionGrant"
+      ],
+      "registered_handlers": [
+        {
+          "name": "create",
+          "decorators": [
+            "classmethod"
+          ]
+        }
+      ]
+    },
+    "core/governance/behavior.py": {
+      "sha256": "e8656e515eb318521503b51bf4850465667b06a78bdabc4155d34ad74b4ef377",
+      "classes": [
+        "SkillCost",
+        "BudgetGate",
+        "ProactiveCandidate",
+        "ProactiveDecider"
+      ],
+      "registered_handlers": [
+        {
+          "name": "_today",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_today",
+          "decorators": [
+            "staticmethod"
+          ]
+        }
+      ]
+    },
+    "core/governance/__init__.py": {
+      "sha256": "af38cbb1f59db7626fbea974b008faa7f11c0d88d8410da774a3391afc29e055",
+      "classes": [],
+      "registered_handlers": []
+    },
+    "core/persona/__init__.py": {
+      "sha256": "222a83b5515086ebf8d5ccda4e6851163b55d0c361c6df7c8b797267dcc82feb",
+      "classes": [],
+      "registered_handlers": []
+    },
+    "core/persona/engine.py": {
+      "sha256": "6dff77e9f4be233fc183db00201ae804280bb487611eac2660561055b0c75910",
+      "classes": [
+        "LifeState",
+        "DayPlanSegment",
+        "PersonaEngine"
+      ],
+      "registered_handlers": [
+        {
+          "name": "_today",
+          "decorators": [
+            "staticmethod"
+          ]
+        }
+      ]
+    },
+    "core/media/understanding.py": {
+      "sha256": "c1d894105be8eb6d5ff9447cd3d6a9d4e48dd93b783a3baa6f6bad4b4c5f33f8",
+      "classes": [
+        "MediaDigestRequest",
+        "MediaDigestResult",
+        "MediaUnderstanding"
+      ],
+      "registered_handlers": [
+        {
+          "name": "_today",
+          "decorators": [
+            "staticmethod"
+          ]
+        }
+      ]
+    },
+    "core/media/__init__.py": {
+      "sha256": "7988e4ee6e6307a0540ba3f76e789bcff0745918882df1f9c5945319f618deb4",
+      "classes": [],
+      "registered_handlers": []
+    }
+  },
+  "xiaoheihe_adapter": {
+    "main.py": {
+      "sha256": "ae578ac54a87e869897aa18b43291f760e72265dab02a686d6704b34ea3e6968",
+      "classes": [
+        "ImageCaptionResult",
+        "ImageCaptionCacheEntry",
+        "XiaoheiheAdapterPlugin"
+      ],
+      "registered_handlers": [
+        {
+          "name": "_provider_id",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_image_component_url",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_identity_value",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_event_sender_identity",
+          "decorators": [
+            "classmethod"
+          ]
+        },
+        {
+          "name": "_event_sender_identity_key",
+          "decorators": [
+            "classmethod"
+          ]
+        },
+        {
+          "name": "_event_post_author_identity_key",
+          "decorators": [
+            "classmethod"
+          ]
+        },
+        {
+          "name": "_fallback_image_attribution",
+          "decorators": [
+            "classmethod"
+          ]
+        },
+        {
+          "name": "_coerce_image_attribution",
+          "decorators": [
+            "classmethod"
+          ]
+        },
+        {
+          "name": "_image_attributions_for_count",
+          "decorators": [
+            "classmethod"
+          ]
+        },
+        {
+          "name": "_normalized_image_attributions",
+          "decorators": [
+            "classmethod"
+          ]
+        },
+        {
+          "name": "_image_attribution_details",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_group_images_by_attribution",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_prepared_image_failure_notice",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "prepare_xiaoheihe_before_agent",
+          "decorators": [
+            "filter.on_waiting_llm_request(priority=1000)"
+          ]
+        },
+        {
+          "name": "constrain_xiaoheihe_public_reply",
+          "decorators": [
+            "filter.on_llm_request(priority=-300000)"
+          ]
+        },
+        {
+          "name": "inject_xiaoheihe_context",
+          "decorators": [
+            "filter.on_llm_request()"
+          ]
+        },
+        {
+          "name": "_provider_runtime_label",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_provider_model",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_normalized_image_identity",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_image_fingerprint",
+          "decorators": [
+            "classmethod"
+          ]
+        },
+        {
+          "name": "_image_url_diagnostics",
+          "decorators": [
+            "classmethod"
+          ]
+        },
+        {
+          "name": "_validated_visual_record_caption",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_visual_record_attribution",
+          "decorators": [
+            "classmethod"
+          ]
+        },
+        {
+          "name": "_image_attributions_conflict",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_image_caption_cache_key",
+          "decorators": [
+            "classmethod"
+          ]
+        },
+        {
+          "name": "_event_raw_message",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_event_image_diagnostics",
+          "decorators": [
+            "classmethod"
+          ]
+        },
+        {
+          "name": "_set_event_extra",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_provider_may_accept_images",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_image_preprocess_budget_seconds",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_image_attempt_timeout_seconds",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_render_blocked_thread_image_notice",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_normalized_image_sources",
+          "decorators": [
+            "classmethod"
+          ]
+        },
+        {
+          "name": "_render_image_source_map",
+          "decorators": [
+            "classmethod"
+          ]
+        },
+        {
+          "name": "_coerce_compression_source",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_grok_query_needs_event_images",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_grok_tool_name",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_expose_prepared_event_images",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_hide_prepared_event_images",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "isolate_xiaoheihe_images_for_grok",
+          "decorators": [
+            "filter.on_using_llm_tool(priority=-1000)"
+          ]
+        },
+        {
+          "name": "restore_xiaoheihe_images_after_grok",
+          "decorators": [
+            "filter.on_llm_tool_respond(priority=1000)"
+          ]
+        },
+        {
+          "name": "restore_xiaoheihe_images_on_agent_done",
+          "decorators": [
+            "filter.on_agent_done(priority=1000)"
+          ]
+        },
+        {
+          "name": "capture_xiaoheihe_complete_reply",
+          "decorators": [
+            "filter.on_llm_response(priority=-1000)"
+          ]
+        },
+        {
+          "name": "mark_xiaoheihe_agent_started",
+          "decorators": [
+            "filter.on_agent_begin(priority=1000)"
+          ]
+        },
+        {
+          "name": "mark_xiaoheihe_agent_done",
+          "decorators": [
+            "filter.on_agent_done(priority=-1000)"
+          ]
+        }
+      ]
+    },
+    "tools/check_astrbot_contract.py": {
+      "sha256": "9fc03496d226e31b3409bc5efbef6c7dad4151e1a34579584b600e708adde5a7",
+      "classes": [],
+      "registered_handlers": []
+    },
+    "tools/validate_repository.py": {
+      "sha256": "7a2dc9f9da4768f515b7497ddd0df4a2d30c474628298210c3721859dcafe736",
+      "classes": [
+        "BasicHtmlParser"
+      ],
+      "registered_handlers": []
+    },
+    "xiaoheihe/auth.py": {
+      "sha256": "d7b11b95e2395e5c59bd40a06bbf4bdc0ed801c2fb901ca80254dfd2a04c8a79",
+      "classes": [
+        "CredentialStore",
+        "AuthService"
+      ],
+      "registered_handlers": []
+    },
+    "xiaoheihe/event.py": {
+      "sha256": "5a73125d5366dcd2a173a2fc93487e6bba055045d37b53ba7ff8998970aa82c9",
+      "classes": [
+        "XiaoheiheMessageEvent"
+      ],
+      "registered_handlers": [
+        {
+          "name": "_append_distinct",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_append_non_overlapping",
+          "decorators": [
+            "staticmethod"
+          ]
+        }
+      ]
+    },
+    "xiaoheihe/web_api.py": {
+      "sha256": "5dbad58ced626b78fd84994586dcc0a584f97c86dbd78c778e8ed0b2a82e3f1c",
+      "classes": [
+        "WebApiController"
+      ],
+      "registered_handlers": []
+    },
+    "xiaoheihe/topic_service.py": {
+      "sha256": "02cdbb394c8b0e367c785ad29b6d743a1ec6446ff9891647e1da4a8563ad0fc9",
+      "classes": [],
+      "registered_handlers": []
+    },
+    "xiaoheihe/context_compression.py": {
+      "sha256": "8c1a6562bffd58c7ae070bcc81e8d2da48b8e6eb97cf89026ef5cf9d8565fd7f",
+      "classes": [
+        "ThreadCompressionSource",
+        "ThreadCompressionResult"
+      ],
+      "registered_handlers": [
+        {
+          "name": "compressible_chars",
+          "decorators": [
+            "property"
+          ]
+        }
+      ]
+    },
+    "xiaoheihe/models.py": {
+      "sha256": "00c2ffbf986dd06515982d0e80f067fb50551cb512d27e88896926ac92da6ed5",
+      "classes": [
+        "LoginState",
+        "NotificationType",
+        "ContentOwnerRole",
+        "EventState",
+        "RoutingTarget",
+        "Credentials",
+        "QRLoginSession",
+        "Notification",
+        "ImageAttribution",
+        "ThreadContext",
+        "PermissionDecision",
+        "SendResult",
+        "ApiPage"
+      ],
+      "registered_handlers": [
+        {
+          "name": "session_id",
+          "decorators": [
+            "property"
+          ]
+        },
+        {
+          "name": "group_id",
+          "decorators": [
+            "property"
+          ]
+        },
+        {
+          "name": "from_session_id",
+          "decorators": [
+            "classmethod"
+          ]
+        },
+        {
+          "name": "route",
+          "decorators": [
+            "property"
+          ]
+        },
+        {
+          "name": "message_id",
+          "decorators": [
+            "property"
+          ]
+        },
+        {
+          "name": "sender_uid_verified",
+          "decorators": [
+            "property"
+          ]
+        },
+        {
+          "name": "sender_identity_key",
+          "decorators": [
+            "property"
+          ]
+        },
+        {
+          "name": "sender_runtime_id",
+          "decorators": [
+            "property"
+          ]
+        }
+      ]
+    },
+    "xiaoheihe/notification_service.py": {
+      "sha256": "051b7ca62927048bf33bf8725e1324cdc0d9fb87f513a6426b00b6c67a5ea1c3",
+      "classes": [
+        "NotificationService"
+      ],
+      "registered_handlers": []
+    },
+    "xiaoheihe/adapter.py": {
+      "sha256": "08d0c8293b72b86feb85e3aa6322430f24838d7cc110c27755350bfeae77f32b",
+      "classes": [
+        "XiaoheihePlatformAdapter"
+      ],
+      "registered_handlers": [
+        {
+          "name": "queue_length",
+          "decorators": [
+            "property"
+          ]
+        }
+      ]
+    },
+    "xiaoheihe/context_builder.py": {
+      "sha256": "b6f8938da3742ac88a20708550c8f5ad585a12610cfb52390faa2a7d4a8b6aca",
+      "classes": [
+        "BuiltContext",
+        "_RenderedComments",
+        "ContextBuilder"
+      ],
+      "registered_handlers": [
+        {
+          "name": "_render_reply_focus",
+          "decorators": [
+            "staticmethod"
+          ]
+        }
+      ]
+    },
+    "xiaoheihe/database.py": {
+      "sha256": "68a80ae7b8c051ec337ffb303ea7aa409e70947261590e56ef5fe7195715546e",
+      "classes": [
+        "ExecuteResult",
+        "Database"
+      ],
+      "registered_handlers": [
+        {
+          "name": "connection",
+          "decorators": [
+            "property"
+          ]
+        },
+        {
+          "name": "transaction",
+          "decorators": [
+            "asynccontextmanager"
+          ]
+        }
+      ]
+    },
+    "xiaoheihe/browse_companion.py": {
+      "sha256": "7172cc47333242252e37bc93982e8a1f723377ade62d9453a02dba8372307d5a",
+      "classes": [
+        "BrowseCompanion"
+      ],
+      "registered_handlers": []
+    },
+    "xiaoheihe/security.py": {
+      "sha256": "675243d69e334a1176834f68e656f7dfcb383b8e99823c0986dc31f7bc9ed7f1",
+      "classes": [
+        "SecurityError"
+      ],
+      "registered_handlers": []
+    },
+    "xiaoheihe/provider_routing.py": {
+      "sha256": "6816d88c47c23dc569520540274c1547805e6395533a5b76e8c8cc181adf7daa",
+      "classes": [
+        "ProviderRoutePlan"
+      ],
+      "registered_handlers": [
+        {
+          "name": "needs_main_fallback_configuration",
+          "decorators": [
+            "property"
+          ]
+        }
+      ]
+    },
+    "xiaoheihe/logging_service.py": {
+      "sha256": "65ee048977d2282c082a76cff4963b5ec2e3f557968076ca02e60545d6a3fe13",
+      "classes": [
+        "LoggingService"
+      ],
+      "registered_handlers": [
+        {
+          "name": "log_path",
+          "decorators": [
+            "property"
+          ]
+        }
+      ]
+    },
+    "xiaoheihe/rate_limiter.py": {
+      "sha256": "0e07178ec6290108082e6f3fab2b8d812cb59f1ec3d87f5e5aecb4f0ee98d9a1",
+      "classes": [
+        "AsyncRateLimiter"
+      ],
+      "registered_handlers": []
+    },
+    "xiaoheihe/permission_service.py": {
+      "sha256": "5aa48ffc0461415d7f33a4b89058ce283feead36492d70ca21d67ca12985df1c",
+      "classes": [
+        "PermissionService"
+      ],
+      "registered_handlers": []
+    },
+    "xiaoheihe/__init__.py": {
+      "sha256": "d7e8fddbec7dca1494cef235c3adf2228db818bca0099be66ac6237cdbf15a09",
+      "classes": [],
+      "registered_handlers": []
+    },
+    "xiaoheihe/parsers.py": {
+      "sha256": "3582cc1bed9a4ce3c2fa08e457aea6f83af7d24b2883d95d16ae857f00424793",
+      "classes": [
+        "ResponseShapeError"
+      ],
+      "registered_handlers": []
+    },
+    "xiaoheihe/public_persona.py": {
+      "sha256": "0a37f0da9ea66c72c10f82ca577801fc6afb0eedecd20dc20968bab60132e8dd",
+      "classes": [],
+      "registered_handlers": []
+    },
+    "xiaoheihe/share_attribution.py": {
+      "sha256": "21def64a54997a12631314b4f7dbc6abb5af109ae8ec2e7904f00023a2fcb7ba",
+      "classes": [],
+      "registered_handlers": []
+    },
+    "xiaoheihe/runtime.py": {
+      "sha256": "293a706e145973ad605954faaa500b98e7ae439c063e7174aec6b10e6609286e",
+      "classes": [
+        "RuntimeServices"
+      ],
+      "registered_handlers": [
+        {
+          "name": "started",
+          "decorators": [
+            "property"
+          ]
+        },
+        {
+          "name": "_aux_provider_key",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_aux_provider_alert_key",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_aux_provider_cooldown_seconds",
+          "decorators": [
+            "staticmethod"
+          ]
+        }
+      ]
+    },
+    "xiaoheihe/task_manager.py": {
+      "sha256": "0933104342007b9a1ab8c5699f3c3322d533ea8e95dfd329630aebef2932c1a5",
+      "classes": [
+        "TaskManager"
+      ],
+      "registered_handlers": [
+        {
+          "name": "closed",
+          "decorators": [
+            "property"
+          ]
+        }
+      ]
+    },
+    "xiaoheihe/config_service.py": {
+      "sha256": "7f5f64387017bd3bc9586d417fd186096d57ce88828070526065c0fb94bed861",
+      "classes": [
+        "ConfigValidationError",
+        "ConfigService"
+      ],
+      "registered_handlers": [
+        {
+          "name": "raw",
+          "decorators": [
+            "property"
+          ]
+        },
+        {
+          "name": "_normalize_legacy",
+          "decorators": [
+            "staticmethod"
+          ]
+        },
+        {
+          "name": "_merge_defaults",
+          "decorators": [
+            "classmethod"
+          ]
+        }
+      ]
+    },
+    "xiaoheihe/request_signing.py": {
+      "sha256": "3bb1a082adcc05a6cd62e7da37cde055f63399a946c02ea50de8654a7ab456cf",
+      "classes": [
+        "SignedRequest",
+        "RequestSigner"
+      ],
+      "registered_handlers": []
+    },
+    "xiaoheihe/repository.py": {
+      "sha256": "c16057556d64925dea274f423bf86fbcb1c94247005b1aa0e4c9db1fdd572adb",
+      "classes": [
+        "Repository"
+      ],
+      "registered_handlers": []
+    },
+    "xiaoheihe/api_client.py": {
+      "sha256": "d6637232f329c5fadaee1245250c64013bfdcd0379b5930d4459e022c72f6dce",
+      "classes": [
+        "XiaoheiheApiError",
+        "CredentialInvalidError",
+        "RateLimitedError",
+        "ResponseContractError",
+        "SendUncertainError",
+        "ApiResponse",
+        "XiaoheiheApiClient"
+      ],
+      "registered_handlers": [
+        {
+          "name": "closed",
+          "decorators": [
+            "property"
+          ]
+        }
+      ]
+    },
+    "xiaoheihe/endpoints.py": {
+      "sha256": "9dd32f7d66849643ddbefdf8a8c46e9e5bddbc6d7041994a2557735425590369",
+      "classes": [
+        "EndpointName",
+        "Endpoint"
+      ],
+      "registered_handlers": []
+    },
+    "xiaoheihe/feed_service.py": {
+      "sha256": "48c1203e5e62b97e6ef7fe7aa559744afc8dae59104f2c42e57a71d2e9c1cf16",
+      "classes": [
+        "FeedService"
+      ],
+      "registered_handlers": []
+    }
+  }
+}

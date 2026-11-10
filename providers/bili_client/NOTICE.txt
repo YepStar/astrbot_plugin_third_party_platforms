@@ -1,0 +1,2 @@
+B站 AI Bot / chenluQwQ (MIT), locally customized extraction
+See ../../docs/LICENSE-* for original notices.
