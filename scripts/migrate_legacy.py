@@ -1,9 +1,9 @@
 """Offline migration CLI. It never changes source plugins or their activation state."""
-import argparse,importlib.util,json,sys
+import argparse,json,sys,types
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
-spec=importlib.util.spec_from_file_location('third_party_migration_source',ROOT/'__init__.py',submodule_search_locations=[str(ROOT)])
-package=importlib.util.module_from_spec(spec);sys.modules[spec.name]=package;spec.loader.exec_module(package)
+package=types.ModuleType('third_party_migration_source');package.__path__=[str(ROOT)]
+sys.modules[package.__name__]=package
 from third_party_migration_source.migration import apply,preview
 from third_party_migration_source.core.store import Store
 
