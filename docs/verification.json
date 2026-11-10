@@ -1,13 +1,13 @@
 {
-  "status": "released_0.1.1_enabled_comparison",
-  "date": "2026-11-10",
-  "tests_passed": 199,
+  "status": "released_0.1.2_enabled_comparison",
+  "date": "2026-11-11",
+  "tests_passed": 204,
   "related_suites": {
-    "netease_browser": 226,
+    "netease_browser": 228,
     "memory_branches": 34,
     "intent_bridge_including_command_tests": 345
   },
-  "total_tests_passed": 804,
+  "total_tests_passed": 811,
   "environment": "isolated /tmp source copies in existing AstrBot container, Python 3.12; outbound model/platform writes mocked",
   "main_import": "passed",
   "python_compile": "passed (workspace-safe cache prefix)",
@@ -52,5 +52,15 @@
     "account_status": "all three configured platforms ready",
     "state_and_logs_endpoints": "passed",
     "native_edge_visual_review": "Mac locked; interaction checks used isolated browser fixture"
+  },
+  "identity_music_fix": {
+    "public_login_nicknames": "verified on all three configured platforms; private identifiers not included in repository",
+    "music_platform_enabled": true,
+    "music_profile_enabled": true,
+    "music_listen_permission": true,
+    "reloaded_state_preserved": true,
+    "duplicate_profile_create": "rejected without disabling existing profile",
+    "fixture_ui": "disabled to standby using connection-page enable button; nicknames distinct from profile IDs",
+    "separate_music_identity_facade": "network identity lookup only for explicit UI account checks, not scheduler heartbeat"
   }
 }

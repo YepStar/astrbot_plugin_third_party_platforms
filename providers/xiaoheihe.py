@@ -26,7 +26,7 @@ class Xiaoheihe:
         if not client.credentials:return {'ready':False,'state':'logged_out'}
         try:await client.check_credentials()
         except CredentialInvalidError:return {'ready':False,'state':'invalid'}
-        return {'ready':True,'state':'valid'}
+        return {'ready':True,'state':'valid','nickname':client.credentials.nickname,'uid':client.credentials.uid}
     async def request_login(self,account):
         session=await self.client(account).request_qr();self.qr[account]=session
         return {'url':session.qr_content,'expires_at':session.expires_at}

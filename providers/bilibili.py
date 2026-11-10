@@ -67,7 +67,9 @@ class Bilibili:
         if not client.config.get('SESSDATA'):return {'ready':False,'state':'logged_out'}
         raw,_=await client._http_get('https://api.bilibili.com/x/web-interface/nav')
         code=raw.get('code')
-        if code==0:return {'ready':True,'state':'valid'}
+        if code==0:
+            profile=raw.get('data') or {}
+            return {'ready':True,'state':'valid','nickname':profile.get('uname',''),'uid':str(profile.get('mid') or '')}
         if code in {-101,-111}:return {'ready':False,'state':'invalid'}
         return {'ready':None,'state':'unreachable'}
     async def request_login(self,account):

@@ -168,3 +168,31 @@ async def test_global_settings_save_failure_restores_in_memory_configuration(app
  monkeypatch.setattr(plugin.config,'save_config',fail)
  response=await client.post('/action',json={'operation':'global_save','values':{'daily_limit':99,'public_persona':'public fixture'}})
  assert response.status_code==500 and plugin.config==before
+
+async def test_create_existing_profile_does_not_disable_or_overwrite(app):
+ app,plugin=app;client=app.test_client()
+ values={'enabled':True,'listen_enabled':True}
+ first=await client.post('/action',json={'operation':'account_create','provider':'netease','account':'default','values':values})
+ assert first.status_code==200
+ import copy
+ before=copy.deepcopy(plugin.config)
+ duplicate=await client.post('/action',json={'operation':'account_create','provider':'netease','account':'default','values':{'enabled':False}})
+ assert duplicate.status_code==400 and plugin.config==before
+ response=await client.post('/action',json={'operation':'account_save','provider':'netease','account':'default','values':{'enabled':False,'listen_enabled':False}})
+ assert response.status_code==200 and not plugin.config['platforms']['netease']['enabled']
+ response=await client.post('/action',json={'operation':'account_save','provider':'netease','account':'default','values':values})
+ account=plugin.config['platforms']['netease']['accounts']['default']
+ assert response.status_code==200 and plugin.config['platforms']['netease']['enabled'] and account['enabled'] and account['actions']['listen']
+
+async def test_login_identity_whitelisted_and_refreshed_on_account_switch(app):
+ app,plugin=app;client=app.test_client()
+ plugin.config['platforms']={'bilibili':{'accounts':{'default':{'enabled':True}}}}
+ adapter=plugin.registry.get('bilibili')
+ adapter.status=AsyncMock(return_value={'ready':True,'nickname':'长安雨云冷月','uid':'123','cookies':{'secret':'test'}})
+ await client.post('/action',json={'operation':'account_status','provider':'bilibili','account':'default'})
+ data=(await (await client.get('/state')).get_json())['data']['account_statuses']['bilibili']['default']
+ assert data['nickname']=='长安雨云冷月' and data['uid']=='123' and 'cookies' not in data
+ adapter.status=AsyncMock(return_value={'ready':False,'state':'logged_out'})
+ await client.post('/action',json={'operation':'account_status','provider':'bilibili','account':'default'})
+ data=(await (await client.get('/state')).get_json())['data']['account_statuses']['bilibili']['default']
+ assert 'nickname' not in data

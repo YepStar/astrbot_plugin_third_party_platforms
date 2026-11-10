@@ -15,6 +15,16 @@ class Music:
     async def status(self,account):
         try:return await self.facade().third_party_scheduler_status()
         except RuntimeError:return {'ready':False,'state':'facade_unavailable'}
+    async def account_status(self,account):
+        result=await self.status(account)
+        if result.get('state')=='facade_unavailable':return result
+        facade=self.facade()
+        if hasattr(facade,'third_party_account_status'):
+            identity=await facade.third_party_account_status()
+            result={**result,**identity}
+            if identity.get('login_ready') is False:
+                result.update(ready=False,state='invalid')
+        return result
     async def acquire(self):
         self.owned=await self.facade().third_party_scheduler_acquire(self.owner,90)
         return self.owned

@@ -344,10 +344,12 @@ class ThirdPartyPlatforms(Star):
                     provider=self.registry.get(pid)
                     method={'login':'request_login','login_poll':'poll_login','account_status':'status'}[operation]
                     if operation=='account_status':
-                        try:result=await provider.status(aid)
+                        try:result=await getattr(provider,'account_status',provider.status)(aid)
                         except asyncio.CancelledError:raise
                         except Exception as exc:result={'ready':None,'state':'unreachable','error':type(exc).__name__}
-                        self.store.set_setting(f'account_status:{pid}:{aid}',{**{k:v for k,v in result.items() if k in {'ready','state','playing','owner','publication_filter_api'}},'checked_at':time.time()})
+                        for key in ('nickname','uid'):
+                            if key in result:result[key]=str(result[key])[:160] if isinstance(result[key],(str,int)) and not isinstance(result[key],bool) else ''
+                        self.store.set_setting(f'account_status:{pid}:{aid}',{**{k:v for k,v in result.items() if k in {'ready','state','playing','owner','publication_filter_api','nickname','uid','login_ready'}},'checked_at':time.time()})
                     else:result=await getattr(provider,method)(aid)
                     if operation=='login':
                         import base64,io,qrcode
@@ -387,9 +389,10 @@ class ThirdPartyPlatforms(Star):
                             else:self.config[key]=value
                         raise
                     result={'saved':True}
-                elif operation=='account_save':
+                elif operation in {'account_save','account_create'}:
                     pid,aid=data['provider'],data['account'];adapter=self.registry.get(pid);self.secrets.path(pid,aid)
                     accounts=self.config.setdefault('platforms',{}).setdefault(pid,{'enabled':True,'accounts':{}}).setdefault('accounts',{})
+                    if operation=='account_create' and aid in accounts:raise ValueError('配置标识已存在，请选择已有配置；接入不会覆盖或停用它')
                     values=dict(data['values']);extra=values.pop('provider_options',{})
                     previous=accounts.get(aid,{})
                     extra=provider_options(self.registry.manifests[pid],extra,previous.get('browse',{}).get('provider_options',{}))

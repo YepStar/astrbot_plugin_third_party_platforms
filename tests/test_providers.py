@@ -93,3 +93,26 @@ async def test_bili_network_restriction_is_not_reported_as_expired_login(tmp_pat
  result=await provider.status('one');assert result['ready'] is None and result['state']=='unreachable'
  provider.client('one')._http_get=AsyncMock(return_value=({'code':-101},None))
  assert (await provider.status('one'))['state']=='invalid'
+
+@pytest.mark.asyncio
+async def test_bili_status_returns_authenticated_identity(tmp_path):
+ module=importlib.import_module(package+'.providers.bilibili')
+ secrets=SecretStore(tmp_path/'secrets');secrets.write('bilibili','default',{'SESSDATA':'fixture'})
+ provider=module.Bilibili(secrets,{})
+ provider.client('default')._http_get=AsyncMock(return_value=({'code':0,'data':{'uname':'真实昵称','mid':42}},None))
+ assert await provider.status('default')=={'ready':True,'state':'valid','nickname':'真实昵称','uid':'42'}
+
+@pytest.mark.asyncio
+async def test_xhh_status_uses_authenticated_credential_identity(tmp_path):
+ provider=importlib.import_module(package+'.providers.xiaoheihe').Xiaoheihe(SecretStore(tmp_path/'secrets'),{})
+ provider.clients['default']=SimpleNamespace(credentials=SimpleNamespace(nickname='盒友昵称',uid='99'),check_credentials=AsyncMock())
+ assert (await provider.status('default'))['nickname']=='盒友昵称'
+
+@pytest.mark.asyncio
+async def test_music_identity_check_separate_from_scheduler_heartbeat():
+ facade=SimpleNamespace(third_party_scheduler_api=1,third_party_scheduler_status=AsyncMock(return_value={'ready':True}),third_party_account_status=AsyncMock(return_value={'login_ready':True,'nickname':'音乐昵称','uid':'7'}))
+ provider=importlib.import_module(package+'.integrations.music').Music(SimpleNamespace(get_registered_star=lambda _:SimpleNamespace(activated=True,star_cls=facade)))
+ await provider.status('default');facade.third_party_account_status.assert_not_awaited()
+ assert (await provider.account_status('default'))['nickname']=='音乐昵称'
+ facade.third_party_account_status.return_value={'login_ready':False,'nickname':'','uid':''}
+ assert (await provider.account_status('default'))['ready'] is False
