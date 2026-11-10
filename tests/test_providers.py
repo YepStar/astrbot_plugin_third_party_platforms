@@ -82,3 +82,14 @@ async def test_bili_http_reads_complete_chunked_utf8_and_enforces_limit(tmp_path
  assert result['text']=='汉字'*40000
  chunks[:]=[b'x'*1_000_000,b'x'*1_000_001]
  with pytest.raises(ValueError,match='response_limit'):await client._http_get('https://api.bilibili.com/test')
+
+
+@pytest.mark.asyncio
+async def test_bili_network_restriction_is_not_reported_as_expired_login(tmp_path):
+ module=importlib.import_module(package+'.providers.bilibili')
+ store=SecretStore(tmp_path/'secret');store.write('bilibili','one',{'SESSDATA':'fixture'})
+ provider=module.Bilibili(store,{})
+ provider.client('one')._http_get=AsyncMock(return_value=({'code':-412},None))
+ result=await provider.status('one');assert result['ready'] is None and result['state']=='unreachable'
+ provider.client('one')._http_get=AsyncMock(return_value=({'code':-101},None))
+ assert (await provider.status('one'))['state']=='invalid'

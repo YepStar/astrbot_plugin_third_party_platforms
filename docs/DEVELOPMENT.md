@@ -1,3 +1,7 @@
+## 0.1.1 workbench update
+
+Fixed sidebar and internal workspace scrolling; persistent parallel platform tabs; overview status/login cards, actual activity table and validated global settings; platform landing schedules and account/browse/reply/publication submenus; logs behind a dedicated modal. Drafts survive platform navigation and status polling; saving a platform submenu patches only its fields, and global saves send only changed fields with per-phase model merging. Account login checks use status(), not QR polling. Structured activity phases are real execution checkpoints. New API state fields include public global settings, model choices, cached login checks, timezone day bounds and per-account activity; page/logs is the inner log endpoint. Activation/credentials are excluded from global_save. Settings validate before mutation and restore in-memory state if persistence fails. 199 plugin tests plus browser fixture interaction checks passed before live deployment.
+
 # 0.1.0 comparison deployment checkpoint
 
 Latest authorization: migrate, integrate, publish and enable; STOP both legacy plugins but DO NOT delete them. User will compare functions. This overrides earlier automatic-uninstall instructions in historical PRD text. Old source/config/data and private cutover backups are retained. Feature differences are deliberate and listed in COMPARISON.md; do not call this complete one-to-one parity.

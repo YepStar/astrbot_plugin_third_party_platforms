@@ -82,3 +82,13 @@ def test_strategy_and_learning_changes_invalidate_plan(tmp_path):
   planned=[t for t in store.tasks() if t['state']=='planned']
   assert len(planned)==1 and planned[0]['params']['query']=='new interest'
  asyncio.run(run())
+
+
+def test_planning_model_override_invalidates_cached_daily_plan(tmp_path):
+ async def run():
+  store,now,cfg,generate,planner=setup(tmp_path)
+  await planner.ensure([('p','a')])
+  cfg['model_ids']={'daily_plan':'new-model'}
+  await planner.ensure([('p','a')])
+  assert generate.await_count==2
+ asyncio.run(run())

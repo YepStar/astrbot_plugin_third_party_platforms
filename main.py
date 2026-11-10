@@ -1,11 +1,14 @@
 from __future__ import annotations
 import asyncio
+import importlib
+# Newly added namespace-package helpers must also be discoverable on hot reload.
+importlib.invalidate_caches()
 import hashlib
 from dataclasses import asdict
 import json
 import re
 import time
-from datetime import datetime
+from datetime import datetime,timedelta
 from zoneinfo import ZoneInfo
 from astrbot.api import logger
 from astrbot.api.star import Star,Context,StarTools
@@ -13,6 +16,7 @@ from astrbot.api.event import AstrMessageEvent,MessageChain,filter
 from quart import request
 from .core.daily_planner import DailyPlanner
 from .core.deployment import checks as deployment_checks
+from .core.settings import public_settings,validate_settings,settings_error
 from .core.research import public_query
 from .core.configuration import account as normalize_account
 from .core.extensions import manifest as provider_manifest,options as provider_options
@@ -54,6 +58,7 @@ class ThirdPartyPlatforms(Star):
         self.task=None;self.background=[];self.api_lock=asyncio.Lock();self.closed=False
         context.register_web_api(f'/{NAME}/page/state',self.api_state,['GET'],'Third-party state')
         context.register_web_api(f'/{NAME}/page/action',self.api_action,['POST'],'Third-party actions')
+        context.register_web_api(f'/{NAME}/page/logs',self.api_logs,['GET'],'Third-party activity logs')
 
     async def initialize(self):
         if not self.store.setting('deployment'):
@@ -300,9 +305,30 @@ class ThirdPartyPlatforms(Star):
         try:return self.change_schedule(data)
         except (ValueError,KeyError,PermissionError) as exc:return {'error':type(exc).__name__}
 
+    async def api_logs(self):
+        return {'status':'ok','data':{'actions':self.store.actions(500)}}
+
+    def cached_accounts(self):
+        result={}
+        for pid,platform in self.config.get('platforms',{}).items():
+            result[pid]={}
+            for aid in platform.get('accounts',{}):
+                current=self.store.setting(f'account_status:{pid}:{aid}',{})
+                if not current:
+                    try:stored=self.secrets.path(pid,aid).is_file()
+                    except ValueError:stored=False
+                    current={'ready':None,'state':'stored_unchecked' if stored else ('unchecked' if pid=='netease' else 'logged_out'),'checked_at':None}
+                result[pid][aid]=current
+        return result
+
+    def model_choices(self):
+        try:return sorted({p.meta().id for p in self.context.get_all_providers()})
+        except (AttributeError,TypeError,RuntimeError):return []
+
     async def api_state(self):
+        now=time.time();zone=ZoneInfo(self.config.get('timezone','Asia/Shanghai'));day=datetime.fromtimestamp(now,zone).replace(hour=0,minute=0,second=0,microsecond=0)
         # Config contains account policy only. Credentials live exclusively in SecretStore.
-        return {'status':'ok','data':{'enabled':self.config.get('enabled',False),'timezone':self.config.get('timezone','Asia/Shanghai'),
+        return {'status':'ok','data':{'now':now,'day_start':day.timestamp(),'day_end':(day+timedelta(days=1)).timestamp(),'global_settings':public_settings(self.config),'model_choices':self.model_choices(),'account_statuses':self.cached_accounts(),'activities':{pid:{aid:self.store.setting(f'activity:{pid}:{aid}',{}) for aid in p.get('accounts',{})} for pid,p in self.config.get('platforms',{}).items()},'enabled':self.config.get('enabled',False),'timezone':self.config.get('timezone','Asia/Shanghai'),
             'platforms':self.config.get('platforms',{}),'tasks':self.store.tasks(time.time()-86400,time.time()+172800),
             'visual':self.registry.get('bilibili').last_visual,'integrations':{'memory_api':getattr(self.memory.facade(),'integration_api',0)},'migration_review':{'private_messages':self.store.setting('legacy_private_review',0),'candidates':len(self.store.setting('legacy_candidate_review',[]))},'actions':self.store.actions(),'memory':self.store.memory_status(),'preferences':self.store.preferences(time.time()),
             'deployment_checks':deployment_checks(self),'provider_manifests':self.registry.manifests,'cutover_ready':self.cutover_ready(),'capabilities':{key:sorted(p.capabilities) for key,p in self.registry.providers.items()}}}
@@ -317,7 +343,12 @@ class ThirdPartyPlatforms(Star):
                     pid,aid=data['provider'],data['account'];self.secrets.path(pid,aid)
                     provider=self.registry.get(pid)
                     method={'login':'request_login','login_poll':'poll_login','account_status':'status'}[operation]
-                    result=await getattr(provider,method)(aid)
+                    if operation=='account_status':
+                        try:result=await provider.status(aid)
+                        except asyncio.CancelledError:raise
+                        except Exception as exc:result={'ready':None,'state':'unreachable','error':type(exc).__name__}
+                        self.store.set_setting(f'account_status:{pid}:{aid}',{**{k:v for k,v in result.items() if k in {'ready','state','playing','owner','publication_filter_api'}},'checked_at':time.time()})
+                    else:result=await getattr(provider,method)(aid)
                     if operation=='login':
                         import base64,io,qrcode
                         payload=result.pop('url')
@@ -344,6 +375,18 @@ class ThirdPartyPlatforms(Star):
                     checked=parse_object(await self.generate('diagnostic',{'instruction':'Return JSON only {\"ok\":true}. Connectivity check only, no tools or external actions.'}))
                     if checked.get('ok') is not True:raise ValueError('model_probe_failed')
                     result={'ready':True}
+                elif operation=='global_save':
+                    try:values=validate_settings(data['values'],self.config)
+                    except ValueError as exc:return {'status':'error','message':settings_error(exc)},400
+                    previous={k:self.config.get(k) for k in values};missing=set(values)-self.config.keys()
+                    self.config.update(values)
+                    try:self.config.save_config()
+                    except Exception:
+                        for key,value in previous.items():
+                            if key in missing:self.config.pop(key,None)
+                            else:self.config[key]=value
+                        raise
+                    result={'saved':True}
                 elif operation=='account_save':
                     pid,aid=data['provider'],data['account'];adapter=self.registry.get(pid);self.secrets.path(pid,aid)
                     accounts=self.config.setdefault('platforms',{}).setdefault(pid,{'enabled':True,'accounts':{}}).setdefault('accounts',{})
@@ -363,6 +406,7 @@ class ThirdPartyPlatforms(Star):
                         cached=getattr(provider,'clients',{}).pop(aid,None)
                         if cached and hasattr(cached,'close'):await cached.close()
                         getattr(provider,'qr',{}).pop(aid,None);self.secrets.delete(pid,aid)
+                        self.store.set_setting(f'account_status:{pid}:{aid}',{'ready':False,'state':'logged_out','checked_at':time.time()})
                     self.config.save_config();result={'logged_out':True}
                 elif operation=='pause':
                     if type(data['enabled']) is not bool:raise ValueError('invalid_enabled')

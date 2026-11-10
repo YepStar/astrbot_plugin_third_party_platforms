@@ -66,7 +66,10 @@ class Bilibili:
         client=self.client(account)
         if not client.config.get('SESSDATA'):return {'ready':False,'state':'logged_out'}
         raw,_=await client._http_get('https://api.bilibili.com/x/web-interface/nav')
-        return {'ready':raw.get('code')==0,'state':'valid' if raw.get('code')==0 else 'invalid'}
+        code=raw.get('code')
+        if code==0:return {'ready':True,'state':'valid'}
+        if code in {-101,-111}:return {'ready':False,'state':'invalid'}
+        return {'ready':None,'state':'unreachable'}
     async def request_login(self,account):
         data=await self.client(account).generate_qr();self.qr[account]={'key':data['key'],'expires_at':time.time()+180};return {'url':data['url'],'expires_at':self.qr[account]['expires_at']}
     async def poll_login(self,account):

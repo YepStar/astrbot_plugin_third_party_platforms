@@ -27,7 +27,7 @@ class DailyPlanner:
         if type(activity)is not int or not 0<=activity<=100:raise ValueError('invalid_activity_level')
         if activity==0:maximum=0
         constraints={'rest':rest_windows,'activity':activity,'candidates':candidates,'windows':windows,'maximum':maximum,'timezone':timezone,
-                     'public_persona':cfg.get('public_persona',''),'provider_id':cfg.get('provider_id',''),
+                     'public_persona':cfg.get('public_persona',''),'provider_id':cfg.get('model_ids',{}).get('daily_plan') or cfg.get('provider_id',''),
                      'exploration_ratio':cfg.get('exploration_ratio',.15),'preference_half_life_days':cfg.get('preference_half_life_days',14),
                      'account_options':{f'{p}:{a}':cfg['platforms'][p]['accounts'][a].get('browse',{}) for p,a in candidates}}
         fingerprint=hashlib.sha256(json.dumps(constraints,sort_keys=True,ensure_ascii=False).encode()).hexdigest()[:20]

@@ -132,3 +132,39 @@ async def test_fresh_install_initializes_only_when_no_legacy_data_or_writers(app
  await plugin.initialize()
  assert plugin.store.setting('deployment')['mode']=='fresh_install'
  assert not plugin.config['enabled']
+
+
+async def test_global_settings_save_is_validated_and_does_not_change_activation_or_accounts(app):
+ import copy
+ app,plugin=app;client=app.test_client()
+ plugin.config['platforms']={'bilibili':{'accounts':{'one':{'enabled':True}}}}
+ before=copy.deepcopy(plugin.config)
+ response=await client.post('/action',json={'operation':'global_save','values':{'daily_rounds':True,'provider_id':'must-not-persist'}})
+ assert response.status_code==400 and plugin.config==before
+ response=await client.post('/action',json={'operation':'global_save','values':{'share_min_score':9,'rest_windows':['23:00-08:00']}})
+ assert response.status_code==200 and plugin.config['share_min_score']==9
+ assert plugin.config['platforms']==before['platforms'] and not plugin.config['enabled']
+ state=(await (await client.get('/state')).get_json())['data']
+ assert state['global_settings']['share_min_score']==9 and state['day_end']>state['day_start']
+ assert state['account_statuses']['bilibili']['one']['ready'] is None
+
+
+async def test_login_status_uses_real_status_check_not_qr_poll(app):
+ app,plugin=app;client=app.test_client()
+ plugin.config['platforms']={'bilibili':{'accounts':{'one':{'enabled':True}}}}
+ adapter=plugin.registry.get('bilibili');adapter.status=AsyncMock(return_value={'ready':True,'state':'valid'})
+ adapter.poll_login=AsyncMock()
+ response=await client.post('/action',json={'operation':'account_status','provider':'bilibili','account':'one'})
+ assert response.status_code==200;adapter.poll_login.assert_not_awaited()
+ data=(await (await client.get('/state')).get_json())['data']
+ assert data['account_statuses']['bilibili']['one']['ready'] is True
+ assert data['account_statuses']['bilibili']['one']['checked_at']>0
+
+
+async def test_global_settings_save_failure_restores_in_memory_configuration(app,monkeypatch):
+ import copy
+ app,plugin=app;client=app.test_client();before=copy.deepcopy(plugin.config)
+ def fail():raise OSError('fixture storage failure')
+ monkeypatch.setattr(plugin.config,'save_config',fail)
+ response=await client.post('/action',json={'operation':'global_save','values':{'daily_limit':99,'public_persona':'public fixture'}})
+ assert response.status_code==500 and plugin.config==before

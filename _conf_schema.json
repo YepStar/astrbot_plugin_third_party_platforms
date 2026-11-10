@@ -1,7 +1,7 @@
 {
   "enabled": {
     "type": "bool",
-    "description": "启用第三方平台自主活动（开发阶段默认关闭）",
+    "description": "启用第三方平台自主活动",
     "default": false
   },
   "provider_id": {

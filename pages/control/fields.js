@@ -1,0 +1,27 @@
+export const accountFields=[
+['enabled','启用账号','bool',false],['owner_umo','分享接收会话（QQ私聊完整标识）','text',''],['owner_uid','该平台上的主人 UID','text',''],['self_uid','机器人账号 UID','text',''],
+['query','浏览搜索词（B站）','text',''],['topic_id','浏览盒子分区编号（小黑盒）','text',''],
+['pools','B站视频来源（逗号分隔，如 热门,排行榜:游戏）','text','popular'],['follow_uids','B站特别关注 UID（逗号分隔）','text',''],
+['special_follow_enabled','浏览特别关注作者的新视频','bool',false],['topic_ids','小黑盒轮换分区编号（逗号分隔）','text',''],
+['owner_bili_name','主人 B站昵称（评论提及时使用）','text',''],['share_delivery','B站分享方式','select','qq_private'],
+['share_enabled','允许分享','bool',false],['share_min_score','分享最低评分','number',8,1,10],['share_gap_seconds','两次分享至少间隔（秒）','number',7200,0,86400],
+['listen_enabled','交给统一规划安排自主听歌（网易云）','bool',false],
+['dry_run','试运行：不发送平台评论、回复或动态','bool',false],
+['poll_mentions','接收小黑盒 @ 通知','bool',true],['poll_replies','接收小黑盒回复通知','bool',true],
+['max_reply_chars','回复最多字数','number',300,1,1000],
+['reply_enabled','允许回复评论与 @ 通知','bool',false],['private_reply_enabled','允许回复 B站私信','bool',false],
+['private_scope','B站私信回复范围','select','owner'],['private_whitelist','私信白名单 UID（逗号分隔）','text',''],
+['comment_enabled','允许主动发表公开评论','bool',false],['comment_min_score','主动评论最低评分','number',8,1,10],
+['dynamic_enabled','允许 B站动态发布','bool',false],
+['whitelist_mode','只回复白名单用户','bool',false],['user_whitelist','回复用户白名单（逗号分隔）','text',''],['user_blacklist','用户黑名单（逗号分隔）','text',''],
+['author_whitelist','原帖作者白名单（逗号分隔）','text',''],['author_blacklist','原帖作者黑名单（逗号分隔）','text',''],['keyword_blacklist','屏蔽词（逗号分隔）','text',''],
+['only_explicit_mentions','仅响应明确提及','bool',true],['reply_to_direct_replies','响应对机器人的直接回复','bool',true],
+['poll_seconds','通知轮询间隔（秒）','number',180,60,3600],['max_age_seconds','消息最长有效时间（秒）','number',3600,60,86400],
+['cooldown_seconds','同一用户回复冷却（秒）','number',60,0,3600],['probability_percent','普通用户回复概率（%）','number',100,0,100],
+['interest_filter','允许根据兴趣选择不回复','bool',false],['similar_skip','跳过相似消息','bool',false],['similarity_percent','相似度门槛（%）','number',85,0,100],
+['always_reply_uids','不受概率筛选的 UID（逗号分隔）','text',''],
+['daily_browse_limit','每日浏览/自主听歌最多轮数','number',2,0,100],['daily_share_limit','每日最多分享条数','number',1,0,100],
+['daily_reply_limit','每日最多公开回复条数','number',20,0,1000],['daily_private_reply_limit','每日最多私信回复条数','number',20,0,1000],['daily_comment_limit','每日最多主动评论条数','number',2,0,100],
+['daily_dynamic_limit','每日最多发布动态条数','number',1,0,20]
+];
+export function flatten(a={}){const v={...a,...a.reply,...a.browse};v.share_enabled=a.actions?.owner_share||false;for(const kind of ['reply','private_reply','comment','dynamic','listen'])v[kind+'_enabled']=a.actions?.[kind]||false;for(const [field,kind] of [['daily_browse_limit','browse'],['daily_share_limit','owner_share'],['daily_reply_limit','reply'],['daily_private_reply_limit','private_reply'],['daily_comment_limit','comment'],['daily_dynamic_limit','dynamic']])v[field]=a.daily_limits?.[kind];return v;}
