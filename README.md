@@ -13,11 +13,17 @@
 - 连接「并行记忆分支」，保存公开阅读经历；连接「网易云音乐」，统一安排自主听歌。
 - 通过「自然意图分析」用日常说法查看、调整活动安排。
 
+## 使用
+
+在 AstrBot 用本仓库地址安装，配置模型，再从「（月）第三方平台」添加账号并扫码登录。先检查登录与浏览设置，再启动自主活动。抽帧需要 FFmpeg 和可识别图片的视觉模型。
+
+已有旧插件时，先停止旧插件并备份；离线迁移工具是 `scripts/migrate_legacy.py`，默认只预览，写入需要 `--apply --legacy-stopped` 和独立暂存目录。旧数据不会被删除。功能对照和迁移边界见[对比说明](docs/COMPARISON.md)。
+
 ## 来源与致谢
 
 本插件参考并提取了两款插件及其本机定制版本的代码。它们是初始平台接入的重要基础：
 
-- [B站 AI Bot](https://github.com/chenluQwQ/astrbot_plugin_bilibili_ai_bot)，作者 **chenluQwQ、claude**：贡献了 B站接口与扫码登录、视频内容读取与评分、主动浏览、评论/私信/动态相关实现，以及自主规划、行为预算和内容偏好机制。
+- [B站 AI Bot](https://github.com/chenluQwQ/astrbot_plugin_bilibili_ai_bot)，作者 **chenluQwQ、claude**：贡献了 B站接口与扫码登录、视频内容读取、FFmpeg 抽帧与视觉分析、评分、主动浏览、评论/私信/动态相关实现，以及自主规划、行为预算和内容偏好机制。
 - [小黑盒适配器](https://github.com/674537331/astrbot_plugin_xiaoheihe_adapter)，作者 **RyanVaderAn**：贡献了小黑盒接口与登录、请求签名、帖子和分区读取、通知/评论流程、多账号隔离、权限校验、事件去重与发送状态管理。
 
 原 MIT 许可证与作者声明保留在源码中。YepStar 负责冷月系整合、通用核心及本机定制的迁移；上述贡献不被重新声明为独立原创。具体提取范围见[开发状态](docs/DEVELOPMENT.md)与[源码审计清单](docs/source-audit.json)。

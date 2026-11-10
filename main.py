@@ -56,6 +56,12 @@ class ThirdPartyPlatforms(Star):
         context.register_web_api(f'/{NAME}/page/action',self.api_action,['POST'],'Third-party actions')
 
     async def initialize(self):
+        if not self.store.setting('deployment'):
+            preflight=deployment_checks(self)
+            parent=self.store.path.parent.parent
+            legacy_data=any((parent/name).is_dir() and any((parent/name).iterdir()) for name in ['astrbot_plugin_bilibili_ai_bot','astrbot_plugin_xiaoheihe_adapter'])
+            if preflight['legacy_plugins_stopped'] and preflight['legacy_transport_stopped'] and not legacy_data:
+                self.store.set_setting('deployment',{'schema':1,'verified':True,'mode':'fresh_install'})
         self.store.recover()
         self.task=asyncio.create_task(self.loop())
         self.background=[asyncio.create_task(self.dispatch_loop()),asyncio.create_task(self.inbox_loop()),asyncio.create_task(self.music_lease_loop())]

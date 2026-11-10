@@ -1,13 +1,13 @@
 {
-  "status": "development_checkpoint_not_release",
+  "status": "release_0.1.0_comparison_ready",
   "date": "2026-11-10",
-  "tests_passed": 170,
+  "tests_passed": 180,
   "related_suites": {
-    "netease_browser": 225,
+    "netease_browser": 226,
     "memory_branches": 34,
     "intent_bridge_including_command_tests": 345
   },
-  "total_tests_passed": 774,
+  "total_tests_passed": 785,
   "environment": "isolated /tmp source copies in existing AstrBot container, Python 3.12; outbound model/platform writes mocked",
   "main_import": "passed",
   "python_compile": "passed (workspace-safe cache prefix)",
@@ -17,9 +17,26 @@
     "Bili source pools/follow UID/share delivery save",
     "schedule time adjustment (earlier checkpoint)"
   ],
-  "platform_network_tests": false,
-  "live_deployment": false,
+  "platform_network_tests": true,
+  "live_deployment": true,
   "legacy_uninstalled": false,
   "repository_published": false,
-  "next_steps": "DEVELOPMENT.md"
+  "next_steps": "DEVELOPMENT.md",
+  "legacy_stopped": true,
+  "legacy_retained": true,
+  "live_checks": {
+    "bilibili_login": "valid",
+    "xiaoheihe_login": "valid",
+    "bilibili_read": "subtitle evidence",
+    "xiaoheihe_read": "full post evidence",
+    "video_frames": 5,
+    "visual_model": "observed",
+    "model_connectivity": "passed",
+    "public_memory_facade_api": 1,
+    "music_publication_filter_api": 1,
+    "paused_plan_preview_tasks": 1,
+    "imported_action_records": 721,
+    "imported_budget_windows": 188,
+    "legacy_pending_private_review": 0
+  }
 }

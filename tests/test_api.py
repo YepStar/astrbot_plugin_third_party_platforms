@@ -122,3 +122,13 @@ async def test_music_takeover_publication_uses_shared_score_floor(app,monkeypatc
  assert not await plugin.music_publication_gate('invite',{'id':1,'name':'song'},{'lyric':'public lyric'})
  plugin.config['enabled']=False
  assert not await plugin.music_publication_gate('share',{'id':1,'name':'song'},{'lyric':'public lyric'})
+
+
+async def test_fresh_install_initializes_only_when_no_legacy_data_or_writers(app):
+ app,plugin=app
+ plugin.context.get_registered_star=lambda _:None
+ plugin.context.get_config=lambda:{'platform':[]}
+ assert plugin.store.setting('deployment') is None
+ await plugin.initialize()
+ assert plugin.store.setting('deployment')['mode']=='fresh_install'
+ assert not plugin.config['enabled']

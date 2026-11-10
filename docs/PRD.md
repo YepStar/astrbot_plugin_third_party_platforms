@@ -1,3 +1,5 @@
+Latest deployment instruction: stop both legacy plugins, retain their source/config/data for comparison; do not uninstall or delete them automatically. See COMPARISON.md for initial-release differences.
+
 # Implementation handoff PRD: 冷月系—第三方平台
 Status update 2026-11-10: user subsequently authorized development and repeated continuation. The original planning-only restriction is superseded. This PRD preserves requirements/design; consult DEVELOPMENT.md and verification.json for actual implemented contracts and remaining release blockers. Proposed APIs below are design intent unless confirmed in code. No live cutover has occurred.
 
@@ -9,7 +11,7 @@ User-required integrations: optional shared memory through 并行记忆分支; o
 Repository publication and live cutover follow successful development/migration validation; the user authorized eventual replacement and uninstall of both legacy plugins after success. Initial two adapters are bundled implementations, not runtime wrappers requiring the two old plugins to remain enabled. Music remains a separately installed optional integration.
 
 ## 2. Source baseline: actual inspection and extraction map
-Root `P=/Users/yipqh/Documents/tools/docker/astrbot-data/plugins/`.
+Root `P=<ASTRBOT_DATA>/plugins/`.
 B=`P/astrbot_plugin_bilibili_ai_bot` (metadata 1.7.2, chenluQwQ/claude upstream); X=`P/astrbot_plugin_xiaoheihe_adapter` (v1.3.3, RyanVaderAn upstream). LOCAL modifications are material. Preserve licenses/attribution, inspect LICENSE/THIRD_PARTY_NOTICES and dependency licenses before deriving code. Do not erase upstream authorship when branding YepStar's integration.
 
 Files read or inspected in this planning session:

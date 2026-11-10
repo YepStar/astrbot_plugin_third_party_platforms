@@ -34,5 +34,14 @@
     "upstream": "https://github.com/674537331/astrbot_plugin_xiaoheihe_adapter",
     "license": "MIT",
     "note": "Locally customized source; extraction/adaptations retained under upstream notice."
+  },
+  {
+    "source": "astrbot_plugin_bilibili_ai_bot/core/video.py",
+    "source_sha256": "ada2419b0604c729a1a12f7b94e71884adf2e12c8b607f44cb3829f6d338ff11",
+    "target": "providers/bili_client/media.py",
+    "target_sha256": "cbc3f09ce55c6c2a32ffc8f585ec180a9e23a29635dd9665d1ce29e16d26b12b",
+    "upstream": "https://github.com/chenluQwQ/astrbot_plugin_bilibili_ai_bot",
+    "license": "MIT",
+    "note": "Frame extraction method adapted with bounded subprocesses and isolated credential/video/frame lifetime; common model observation contract is in core/media.py."
   }
 ]
