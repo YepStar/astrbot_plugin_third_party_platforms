@@ -4,14 +4,14 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 from .core.models import Content,Evaluation
 
-def import_history(root,store,record,load):
+def import_history(root,store,record,load,offline_db):
     budgets={};counts={'observations':0,'candidate_review':0}
     def add(bucket,window,amount):
         if isinstance(amount,(int,float)) and math.isfinite(amount) and amount>0:
             budgets[(bucket,window)]=budgets.get((bucket,window),0)+amount
     base=root/'plugin_data/astrbot_plugin_bilibili_ai_bot';database=base/'bilibot.sqlite3'
     if database.exists():
-        db=sqlite3.connect('file:'+str(database)+'?mode=ro',uri=True);db.row_factory=sqlite3.Row
+        db=offline_db(database);db.row_factory=sqlite3.Row
         try:
             mapping={'behavior:global:day':'all','behavior:global:minute':'minute',
                 'behavior:comment_reply:day':'bilibili:default:reply','behavior:private_reply:day':'bilibili:default:private_reply',
@@ -40,7 +40,7 @@ def import_history(root,store,record,load):
         store.observe(content,Evaluation(score,str(reason),'legacy watch record'),dt.hour,dt.timestamp());counts['observations']+=1
     base=root/'plugin_data/astrbot_plugin_xiaoheihe_adapter';database=base/'xiaoheihe.db'
     if database.exists():
-        db=sqlite3.connect('file:'+str(database)+'?mode=ro',uri=True);db.row_factory=sqlite3.Row
+        db=offline_db(database);db.row_factory=sqlite3.Row
         try:
             for row in db.execute('SELECT profile_id,parent_comment_id,status FROM outgoing_replies'):
                 if row['parent_comment_id']:

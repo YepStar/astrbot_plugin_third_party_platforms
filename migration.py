@@ -92,6 +92,11 @@ def build_config(b,x):
         'share_min_score':b.get('RECOMMEND_OWNER_MIN_SCORE',8),'daily_limit':b.get('BEHAVIOR_GLOBAL_DAILY_LIMIT',20),
         'daily_rounds':b.get('PROACTIVE_TIMES_COUNT',2)}
 
+def offline_db(path):
+    wal=path.with_name(path.name+'-wal')
+    if wal.exists() and wal.stat().st_size:raise ValueError('offline_source_has_uncheckpointed_wal')
+    return sqlite3.connect('file:'+str(path)+'?mode=ro&immutable=1',uri=True)
+
 def backup_tree(source,dest):
     if not source.exists():return
     dest.mkdir(parents=True,exist_ok=True);dest.chmod(0o700)
@@ -100,7 +105,7 @@ def backup_tree(source,dest):
         target=dest/p.name
         if p.is_dir():backup_tree(p,target)
         elif p.suffix in {'.db','.sqlite3','.sqlite'}:
-            src=sqlite3.connect('file:'+str(p)+'?mode=ro',uri=True);out=sqlite3.connect(target)
+            src=offline_db(p);out=sqlite3.connect(target)
             try:src.backup(out)
             finally:src.close();out.close()
             target.chmod(0o600)
@@ -173,7 +178,7 @@ def apply(root,target,*,source_stopped=False):
         record(owner_key('xiaoheihe',str(row['post_id']),row.get('owner_umo','')),'xiaoheihe',x.get('browse_companion',{}).get('profile_id','default'),'owner_share','succeeded' if row.get('status')=='sent' else 'unknown')
     database=old_data(root,'xiaoheihe_adapter')/'xiaoheihe.db'
     if database.exists():
-        db=sqlite3.connect('file:'+str(database)+'?mode=ro',uri=True);db.row_factory=sqlite3.Row
+        db=offline_db(database);db.row_factory=sqlite3.Row
         try:
             for row in db.execute('SELECT profile_id,external_comment_id,status FROM incoming_events'):
                 if row['external_comment_id']:
@@ -182,7 +187,7 @@ def apply(root,target,*,source_stopped=False):
                 store.ingest('xiaoheihe',row['profile_id'],row['event_type'],[],{'latest':row['last_event_id']})
         finally:db.close()
     store.set_setting('legacy_private_review',private_review)
-    history=import_history(root,store,record,load)
+    history=import_history(root,store,record,load,offline_db)
     configfile=target/'imported-config.json';configfile.write_text(json.dumps(configuration,ensure_ascii=False,indent=2));configfile.chmod(0o600)
     result={'schema':1,'complete':True,'legacy_stopped_asserted':True,'imported_actions':imported,
         'history':history,'private_pending_review':private_review,'config_file':'imported-config.json','activation_allowed':False,'reason':'capability parity review required',
