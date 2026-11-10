@@ -5,7 +5,7 @@ class Music:
     id='netease'
     capabilities=frozenset({'listen'})
     owner='astrbot_plugin_third_party_platforms'
-    def __init__(self,context):self.context=context;self.owned=False
+    def __init__(self,context):self.context=context;self.owned=False;self.publication_gate=None
     def facade(self):
         star=self.context.get_registered_star('astrbot_plugin_netease_browser')
         if star is None or getattr(star,'activated',True) is False:raise RuntimeError('music_unavailable')
@@ -21,7 +21,11 @@ class Music:
     async def execute(self,account,action,params,key):
         if action!='listen':raise ValueError('unsupported_action')
         if not await self.acquire():return Receipt('failed',code='scheduler_owned_elsewhere')
-        result=await self.facade().third_party_scheduler_run(self.owner,key)
+        facade=self.facade()
+        if self.publication_gate is not None:
+            if getattr(facade,'third_party_scheduler_filter_api',0)!=1:return Receipt('failed',code='music_publication_filter_required')
+            result=await facade.third_party_scheduler_run(self.owner,key,publication_gate=self.publication_gate)
+        else:result=await facade.third_party_scheduler_run(self.owner,key)
         return Receipt(result['state'],code=result.get('code',''))
     async def close(self):
         if self.owned:

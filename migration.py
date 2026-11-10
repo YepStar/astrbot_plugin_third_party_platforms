@@ -113,7 +113,7 @@ def backup_tree(source,dest):
         elif not p.name.endswith(('-wal','-shm')):
             shutil.copy2(p,target);target.chmod(0o600)
 
-def apply(root,target,*,source_stopped=False):
+def apply(root,target,*,source_stopped=False,handover_started=None):
     root,target=Path(root).resolve(),Path(target).resolve()
     if not source_stopped:raise ValueError('legacy_must_be_stopped')
     if target==root or root in target.parents:raise ValueError('target_must_be_outside_source')
@@ -140,6 +140,8 @@ def apply(root,target,*,source_stopped=False):
         if store.claim_action(key,provider,account,kind,[],0):
             store.finish_action(key,Receipt(state,code='legacy_import'));imported+=1
     data=old_data(root,'bilibili_ai_bot')
+    for stream in ['reply','mention']:
+        store.ingest('bilibili','default',stream,[],{'latest':'','started_at':time.time() if handover_started is None else handover_started})
     for rpid in load(data/'replied.json',[]):record('reply:bilibili:default:reply:'+str(rpid),'bilibili','default','reply')
     for bv in load(data/'commented_videos.json',[]):record('comment:bilibili:default:'+str(bv),'bilibili','default','comment')
     private=load(data/'private_message_state.json',{})

@@ -17,7 +17,7 @@ from .core.research import public_query
 from .core.configuration import account as normalize_account
 from .core.extensions import manifest as provider_manifest,options as provider_options
 from .core.store import Store
-from .core.models import Registry
+from .core.models import Registry,Content
 from .core.policy import Policy
 from .core.execution import Executor,Scheduler
 from .core.planning import Planner,window_for
@@ -39,12 +39,14 @@ class ThirdPartyPlatforms(Star):
         data=StarTools.get_data_dir(NAME)
         self.store=Store(data/'platforms.sqlite3');self.secrets=SecretStore(data/'secrets')
         self.registry=Registry()
-        for provider in (Bilibili(self.secrets,config,generate=self.generate,cache_root=data/'media_tmp'),Xiaoheihe(self.secrets,config)):self.registry.register(provider)
+        for provider in (Bilibili(self.secrets,config,generate=self.generate,cache_root=data/'media_tmp'),Xiaoheihe(self.secrets,config)):
+            self.registry.register(provider,{'api':1,'name':'B站' if provider.id=='bilibili' else '小黑盒','fields':{}})
         self.music = Music(context)
-        self.registry.register(self.music)
+        self.registry.register(self.music,{'api':1,'name':'网易云音乐','fields':{}})
         self.policy=Policy(config,ready=lambda:self.cutover_ready());self.executor=Executor(self.store,self.registry,self.policy)
         self.memory=PublicMemoryGateway(context,lambda:config.get('memory_enabled',False),store=self.store)
         self.reader=Reader(self.generate,lambda:config.get('evaluation_rubric',''))
+        self.music.publication_gate=self.music_publication_gate
         self.browsing=BrowsingService(self.store,self.registry,self.executor,self.reader,self.memory,self.deliver)
         self.inbox=Inbox(self.store,self.registry,self.executor,self.generate,memory=self.memory)
         self.scheduler=Scheduler(self.store,self.registry,self.executor,{'browse':self.browsing.browse,'listen':self.listen})
@@ -79,6 +81,21 @@ class ThirdPartyPlatforms(Star):
         if not re.fullmatch(r'[^:]+:FriendMessage:\d+',umo):raise ValueError('private_recipient_required')
         delivered=await self.context.send_message(umo,MessageChain().message(text))
         if not delivered:raise RuntimeError('owner_delivery_unconfirmed')
+
+    async def music_publication_gate(self,action,song,source):
+        if action not in {'share','invite','comment'}:return False
+        try:
+            account=self.policy.permit('netease','default','listen')
+            evidence=json.dumps({'song':song,'lyric':source.get('lyric',''),'comments':source.get('comments',[])},ensure_ascii=False)
+            content=Content('netease','default',str(song['id']),'https://music.163.com/song?id='+str(song['id']),str(song.get('name','')),evidence,modality='music_metadata_lyrics_comments')
+            evaluation=await self.reader.evaluate(content)
+            self.policy.permit('netease','default','listen')
+            hour=datetime.now(ZoneInfo(self.config.get('timezone','Asia/Shanghai'))).hour
+            self.store.observe(content,evaluation,hour,time.time())
+            setting='comment_min_score' if action=='comment' else 'share_min_score'
+            minimum=max(float(self.config.get(setting,8)),float(account.get(setting,0)))
+            return evaluation.score>=minimum and (action=='comment' or evaluation.recommend)
+        except (ValueError,PermissionError,RuntimeError):return False
 
     async def listen(self,task):
         if time.time()>=task['end']:return

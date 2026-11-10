@@ -191,22 +191,24 @@ class Bilibili:
         actions=cfg.get('actions',{});streams=[]
         if actions.get('reply'):
             for stream,endpoint in [('reply','reply'),('mention','at')]:
-                previous=cursor(stream);events=[]
+                previous=cursor(stream);events=[];head=None
                 for page in range(1,4):
                     raw,_=await client._http_get('https://api.bilibili.com/x/msgfeed/'+endpoint,params={'ps':20,'pn':page})
                     if raw.get('code')!=0:raise RuntimeError('notification_unavailable')
                     rows=raw.get('data',{}).get('items',[]);boundary=False
                     for row in rows:
                         item=row.get('item',{});rpid=str(item.get('source_id',''));actor=str(row.get('user',{}).get('mid',''))
+                        if rpid and head is None:head=rpid
                         if not rpid or not actor.isdigit() or actor==self_uid:continue
                         if previous and rpid==previous.get('latest'):boundary=True;break
                         route={'oid':str(item.get('subject_id','')),'type':int(item.get('business_id',1)),
                             'root':str(item.get('root_id') or rpid),'parent':rpid,'reply_anchor':rpid}
                         created=float(row.get('reply_time') or row.get('at_time') or row.get('time') or 0)
+                        if previous and created<float(previous.get('started_at',0)):continue
                         events.append(Incoming(self.id,account,stream,rpid,actor,str(item.get('source_content','')),created,route,True,True))
                     if boundary or len(rows)<20:break
-                latest=events[0].external_id if events else (previous or {}).get('latest','')
-                streams.append((stream,events,{'latest':latest}))
+                latest=head or (previous or {}).get('latest','')
+                streams.append((stream,events,{**(previous or {}),'latest':latest}))
         if actions.get('private_reply'):
             previous=cursor('private');sequences=dict((previous or {}).get('sessions',{}));events=[]
             raw,_=await client._http_get('https://api.vc.bilibili.com/session_svr/v1/session_svr/get_sessions',params={'session_type':1,'group_fold':1,'unfollow_fold':0,'sort_rule':2,'size':100,'build':0,'mobi_app':'web'})

@@ -105,3 +105,20 @@ async def test_dynamic_requires_cutover_authority_and_deduplicates_user_message(
  assert (await plugin.publish_dynamic(event,'public text','one'))['state']=='succeeded'
  assert (await plugin.publish_dynamic(event,'different draft on retry','one'))['state']=='not_repeated'
  assert adapter.execute.await_count==1
+
+
+async def test_music_takeover_publication_uses_shared_score_floor(app,monkeypatch):
+ app,plugin=app
+ plugin.config.update(enabled=True,share_min_score=8)
+ plugin.config['platforms']={'netease':{'enabled':True,'accounts':{'default':{'enabled':True,'actions':{'listen':True}}}}}
+ monkeypatch.setattr(plugin,'cutover_ready',lambda:True)
+ from importlib import import_module
+ Evaluation=import_module(base+'.core.models').Evaluation
+ plugin.reader.evaluate=AsyncMock(return_value=Evaluation(7,'reason','evidence',True))
+ assert not await plugin.music_publication_gate('share',{'id':1,'name':'song'},{'lyric':'public lyric'})
+ plugin.reader.evaluate.return_value=Evaluation(9,'reason','evidence',True)
+ assert await plugin.music_publication_gate('share',{'id':1,'name':'song'},{'lyric':'public lyric'})
+ plugin.config['share_min_score']=10
+ assert not await plugin.music_publication_gate('invite',{'id':1,'name':'song'},{'lyric':'public lyric'})
+ plugin.config['enabled']=False
+ assert not await plugin.music_publication_gate('share',{'id':1,'name':'song'},{'lyric':'public lyric'})
