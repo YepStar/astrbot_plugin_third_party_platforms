@@ -1,6 +1,6 @@
-import {biliReference} from './bili_reference.js';
-import {renderEventBoard,renderSources,renderStorage,renderBiliReference} from './components.js';
-import {accountFields,flatten} from './fields.js';
+import {biliReference} from './bili_reference.js?v=0.2.1';
+import {renderEventBoard,renderSources,renderStorage,renderBiliReference} from './components.js?v=0.2.1';
+import {accountFields,flatten} from './fields.js?v=0.2.1';
 const $=id=>document.getElementById(id);
 let bridge,state,provider='',subpage='schedule',editingTask=null,loginTarget=null,globalHydrated=false,checking=false,toastTimer;
 const accounts=new Map(),drafts=new Map();let logRows=[],globalBaseline={},homeAnchor='overview-top';

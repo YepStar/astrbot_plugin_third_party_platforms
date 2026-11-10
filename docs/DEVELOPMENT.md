@@ -1,3 +1,7 @@
+## 0.2.1 asset cache alignment
+
+Version all imported UI modules as well as the entry script/CSS to prevent cached 0.1.x field descriptors from hiding new settings. No runtime behavior or configuration changes. JS syntax verified; backend suite remains 213 passed.
+
 ## 0.2.0 workbench parity pass
 
 User requests: BiliBot-style daily event ring/list, explain duplicate cancelled schedules, richer original Bili controls, XHH real-topic probe/checkbox/fallback/source storage, detailed connection views. Implemented native SVG time ring with concurrent lanes; current events exclude cancellation history. Platform schedule history remains inspectable. apply_daily_plan reuses same provider/account/action/time window instead of replacing solely because its planning fingerprint changed; updated params increment revision, superseded events keep a reason flag, manual/executed blocks remain protected.

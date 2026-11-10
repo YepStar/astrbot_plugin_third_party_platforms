@@ -1,5 +1,5 @@
 {
-  "status": "released_0.2.0_enabled_comparison",
+  "status": "released_0.2.1_enabled_comparison",
   "date": "2026-11-11",
   "tests_passed": 213,
   "related_suites": {
@@ -80,5 +80,6 @@
     "new_interactions_remain_disabled": true,
     "old_plugins_retained_disabled": true,
     "total_legacy_parity": false
-  }
+  },
+  "static_module_cache": "Versioned module imports for fields, components and original schema, so previous UI modules cannot hide restored settings."
 }
