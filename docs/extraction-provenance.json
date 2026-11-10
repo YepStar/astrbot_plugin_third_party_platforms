@@ -1,0 +1,38 @@
+[
+  {
+    "source": "astrbot_plugin_bilibili_ai_bot/core/proactive.py",
+    "source_sha256": "19634c7b0214949d557ae1994dacfe093c777fe2482e92f931f3b94ab79de5d2",
+    "target": "providers/bili_client/discovery.py",
+    "target_sha256": "e4f9dd318902dec8f92b858d2ef42ec8eb82d228d3619a006b30342008efed20",
+    "upstream": "https://github.com/chenluQwQ/astrbot_plugin_bilibili_ai_bot",
+    "license": "MIT",
+    "note": "Locally customized source; extraction/adaptations retained under upstream notice."
+  },
+  {
+    "source": "astrbot_plugin_bilibili_ai_bot/core/config.py",
+    "source_sha256": "5571a6de5abf014215379fa061eef016299e5a61d0419ec14ec044bfa34053c5",
+    "target": "providers/bili_client/zones.py",
+    "target_sha256": "7fd82033a07f44fdf655b6af9e9c24fae3568c1013610bd68f20da0c9a152745",
+    "upstream": "https://github.com/chenluQwQ/astrbot_plugin_bilibili_ai_bot",
+    "license": "MIT",
+    "note": "Only static BILI_ZONES constant extracted; no legacy config paths or runtime state."
+  },
+  {
+    "source": "astrbot_plugin_xiaoheihe_adapter/xiaoheihe/context_builder.py",
+    "source_sha256": "b6f8938da3742ac88a20708550c8f5ad585a12610cfb52390faa2a7d4a8b6aca",
+    "target": "providers/xhh_client/context_builder.py",
+    "target_sha256": "b6f8938da3742ac88a20708550c8f5ad585a12610cfb52390faa2a7d4a8b6aca",
+    "upstream": "https://github.com/674537331/astrbot_plugin_xiaoheihe_adapter",
+    "license": "MIT",
+    "note": "Locally customized source; extraction/adaptations retained under upstream notice."
+  },
+  {
+    "source": "astrbot_plugin_xiaoheihe_adapter/xiaoheihe/context_compression.py",
+    "source_sha256": "8c1a6562bffd58c7ae070bcc81e8d2da48b8e6eb97cf89026ef5cf9d8565fd7f",
+    "target": "providers/xhh_client/context_compression.py",
+    "target_sha256": "8c1a6562bffd58c7ae070bcc81e8d2da48b8e6eb97cf89026ef5cf9d8565fd7f",
+    "upstream": "https://github.com/674537331/astrbot_plugin_xiaoheihe_adapter",
+    "license": "MIT",
+    "note": "Locally customized source; extraction/adaptations retained under upstream notice."
+  }
+]

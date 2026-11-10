@@ -45,3 +45,21 @@ class Planner:
             except sqlite3.IntegrityError:pass
             result.append(key)
         return result
+
+def allowed_intervals(day,windows,rest_windows,timezone='Asia/Shanghai'):
+    """Subtract rest periods, including rest that started on the previous calendar day."""
+    rests=[]
+    for delta in (-1,0,1):
+        for window in rest_windows:rests.append(window_for(day+timedelta(days=delta),window,timezone))
+    result=[]
+    for source_index,window in enumerate(windows):
+        pieces=[window_for(day,window,timezone)]
+        for low,high in rests:
+            next_pieces=[]
+            for start,end in pieces:
+                if high<=start or low>=end:next_pieces.append((start,end));continue
+                if start<low:next_pieces.append((start,low))
+                if high<end:next_pieces.append((high,end))
+            pieces=next_pieces
+        result.extend({'start':a,'end':b,'source_window':source_index} for a,b in pieces if b>a)
+    return result

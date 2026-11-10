@@ -22,6 +22,7 @@ class EndpointName(StrEnum):
     FEED = "feed"
     TOPIC_INDEX = "topic_index"
     TOPIC_FEED = "topic_feed"
+    SEARCH = "search"
 
 
 @dataclass(frozen=True, slots=True)
@@ -34,6 +35,7 @@ class Endpoint:
 
 
 ENDPOINTS: dict[EndpointName, Endpoint] = {
+    EndpointName.SEARCH: Endpoint("GET", "/bbs/app/api/general/search/v1", True, True),
     EndpointName.REQUEST_QR: Endpoint("GET", "/account/get_qrcode_url/", False, True),
     EndpointName.QR_STATE: Endpoint("GET", "/account/qr_state/", False, True),
     EndpointName.CURRENT_USER: Endpoint(

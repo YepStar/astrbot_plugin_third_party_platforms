@@ -1,12 +1,12 @@
 # Implementation handoff PRD: 冷月系—第三方平台
-Status: requirements/design only, 2026-11-10. User explicitly prohibits implementation now due to quota. This session reads source and writes this document ONLY. No plugin/config/runtime/repository changes, no test posts or API actions. Future developer must re-read current source before implementation; proposed APIs below are NOT existing APIs.
+Status update 2026-11-10: user subsequently authorized development and repeated continuation. The original planning-only restriction is superseded. This PRD preserves requirements/design; consult DEVELOPMENT.md and verification.json for actual implemented contracts and remaining release blockers. Proposed APIs below are design intent unless confirmed in code. No live cutover has occurred.
 
 ## 1. Objective / boundaries
 Create one extensible AstrBot plugin, proposed id `astrbot_plugin_third_party_platforms`, plugin-list name `冷月系—第三方平台`, sidebar `（月）第三方平台`; author YepStar, same Cold Moon family. Initial built-in providers: Bilibili + Xiaoheihe, extracted from the LOCALLY INSTALLED, customized market plugins, not fresh upstream copies. Users configure their own bot accounts/login tokens. Bot can autonomously browse, evaluate, comment/reply, and share interesting content with its configured owner. Preserve platform-specific capabilities, elevate reusable policy/services to host level. Support subsequent providers without modifying scheduler/evaluator/storage internals.
 
 User-required integrations: optional shared memory through 并行记忆分支; optional 网易云音乐 integration with host planning taking over autonomous listening; 自然意图分析 can read/create/change schedules using natural language. Do not merge these independent Cold Moon plugins into this repo. Do not recreate removed B站经历手帐/Gemini diagnostics. Do not silently replace persona, private companion, global model-cost guard, book/music/intent functionality already supplied elsewhere.
 
-Repository creation/publication/visibility and live cutover are future execution steps, not authorized work for THIS PRD session. Initial two adapters are bundled implementations, not runtime wrappers requiring the two old plugins to remain enabled. Music remains a separately installed optional integration.
+Repository publication and live cutover follow successful development/migration validation; the user authorized eventual replacement and uninstall of both legacy plugins after success. Initial two adapters are bundled implementations, not runtime wrappers requiring the two old plugins to remain enabled. Music remains a separately installed optional integration.
 
 ## 2. Source baseline: actual inspection and extraction map
 Root `P=/Users/yipqh/Documents/tools/docker/astrbot-data/plugins/`.

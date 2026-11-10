@@ -46,3 +46,18 @@ def test_memory_gateway_never_opens_private_database():
         def get_registered_star(self,name):return None
     result=module.PublicMemoryGateway(Context(),True).put(SimpleNamespace(provider='bilibili'),None)
     assert result=='unavailable'
+
+def test_music_facade_delegation_and_release():
+    module=importlib.import_module(package+'.integrations.music')
+    async def run():
+        facade=SimpleNamespace(third_party_scheduler_api=1,
+            third_party_scheduler_acquire=AsyncMock(return_value=True),
+            third_party_scheduler_run=AsyncMock(return_value={'state':'succeeded','code':'decision_processed'}),
+            third_party_scheduler_release=AsyncMock())
+        context=SimpleNamespace(get_registered_star=lambda _:SimpleNamespace(activated=True,star_cls=facade))
+        adapter=module.Music(context)
+        result=await adapter.execute('default','listen',{},'key')
+        assert result.code=='decision_processed'
+        facade.third_party_scheduler_run.assert_awaited_once_with(adapter.owner,'key')
+        await adapter.close();facade.third_party_scheduler_release.assert_awaited_once_with(adapter.owner)
+    asyncio.run(run())

@@ -49,11 +49,30 @@ class Provider(Protocol):
     async def close(self) -> None: ...
 
 class Registry:
-    def __init__(self):self.providers={}
-    def register(self, provider):
+    def __init__(self):self.providers={};self.manifests={}
+    def register(self, provider, definition=None):
         if not provider.id or provider.id in self.providers:raise ValueError('duplicate_provider')
         self.providers[provider.id]=provider
+        self.manifests[provider.id]=definition or {'api':1,'name':provider.id,'fields':{}}
     def get(self, key, capability=None):
         provider=self.providers[key]
         if capability and capability not in provider.capabilities:raise ValueError('unsupported_capability')
         return provider
+
+@dataclass(frozen=True)
+class Incoming:
+    provider: str
+    account: str
+    stream: str
+    external_id: str
+    actor_id: str
+    text: str
+    created: float
+    route: dict
+    actor_verified: bool = False
+    explicit: bool = True
+    author_id: str = ''
+    source_text: str = ''
+    context: dict = field(default_factory=dict)
+    @property
+    def key(self):return f'{self.provider}:{self.account}:{self.stream}:{self.external_id}'

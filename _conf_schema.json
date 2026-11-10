@@ -58,41 +58,51 @@
     "default": false
   },
   "platforms": {
-    "type": "object",
-    "description": "平台账号策略（也可在工作台添加）",
-    "items": {
+    "type": "dict",
+    "description": "平台账号策略，由工作台管理，保留扩展平台设置",
+    "default": {
       "bilibili": {
-        "type": "object",
-        "description": "B站",
-        "items": {
-          "enabled": {
-            "type": "bool",
-            "description": "启用平台",
-            "default": false
-          },
-          "accounts": {
-            "type": "object",
-            "description": "账号策略，由工作台管理",
-            "items": {}
-          }
-        }
+        "enabled": false,
+        "accounts": {}
       },
       "xiaoheihe": {
-        "type": "object",
-        "description": "小黑盒",
-        "items": {
-          "enabled": {
-            "type": "bool",
-            "description": "启用平台",
-            "default": false
-          },
-          "accounts": {
-            "type": "object",
-            "description": "账号策略，由工作台管理",
-            "items": {}
-          }
-        }
+        "enabled": false,
+        "accounts": {}
+      },
+      "netease": {
+        "enabled": false,
+        "accounts": {}
       }
     }
+  },
+  "comment_min_score": {
+    "type": "float",
+    "description": "所有平台共用的最低主动评论评分",
+    "default": 8
+  },
+  "preference_half_life_days": {
+    "type": "float",
+    "description": "偏好权重减半所需天数",
+    "default": 14
+  },
+  "exploration_ratio": {
+    "type": "float",
+    "description": "规划时的探索比例（0到1）",
+    "default": 0.15
+  },
+  "evaluation_rubric": {
+    "type": "text",
+    "description": "所有平台共用的内容评分偏好",
+    "default": "优先有具体内容、新意和可靠来源的作品，不因标题夸张或热度就给高分。"
+  },
+  "rest_windows": {
+    "type": "list",
+    "description": "不安排自主活动的休息时间窗，可跨午夜",
+    "default": []
+  },
+  "activity_level": {
+    "type": "int",
+    "description": "自主活动倾向（0到100），不是必须完成的次数",
+    "default": 55
   }
 }

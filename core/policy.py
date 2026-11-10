@@ -1,5 +1,6 @@
 from datetime import datetime
 from zoneinfo import ZoneInfo
+from .sharing import routes
 
 class Policy:
     def __init__(self,config):self.config=config
@@ -11,11 +12,15 @@ class Policy:
         return item
     def permit(self,provider,account,action,evaluation=None):
         item=self.account(provider,account)
+        if action in {'reply','private_reply','comment','dynamic'} and item.get('reply',{}).get('dry_run',False):raise PermissionError('dry_run_enabled')
         if action!='browse' and not item.get('actions',{}).get(action,False):raise PermissionError('action_disabled')
+        if action=='comment':
+            floor=max(float(self.config.get('comment_min_score',8)),float(item.get('comment_min_score',0)))
+            if evaluation is None or evaluation.score<floor:raise PermissionError('comment_score_gate')
         if action=='owner_share':
             floor=max(float(self.config.get('share_min_score',8)),float(item.get('share_min_score',0)))
             if evaluation is None or not evaluation.recommend or evaluation.score<floor:raise PermissionError('score_gate')
-            if not item.get('owner_umo'):raise PermissionError('recipient_unconfigured')
+            if not routes(provider,item):raise PermissionError('recipient_unconfigured')
         return item
     def limits(self,provider,account,kind,now):
         item=self.account(provider,account)

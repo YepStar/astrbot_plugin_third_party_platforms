@@ -1,8 +1,8 @@
-import hashlib
 import time
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from .models import Receipt
+from .sharing import share
 
 class BrowsingService:
     def __init__(self,store,registry,executor,reader,memory,deliver,*,clock=time.time):
@@ -15,7 +15,7 @@ class BrowsingService:
         key='browse:'+task['id']
         if not self.store.claim_action(key,provider.id,account,'browse',self.executor.policy.limits(provider.id,account,'browse',self.clock()),self.clock()):return
         try:
-            rows=await provider.browse(account,task['params'])
+            rows=await provider.browse(account,{**task['params'],'_session_id':task['id'],'_skip_ids':self.store.observed_ids(provider.id,account,self.clock()-86400)})
             self.store.finish_action(key,Receipt('succeeded'))
         except BaseException:
             self.store.finish_action(key,Receipt('failed',code='browse_failed'));raise
@@ -29,12 +29,19 @@ class BrowsingService:
             try:memory_state=self.memory.put(content,evaluation)
             except (PermissionError,RuntimeError):memory_state='unavailable'
             self.store.set_setting('last_read',{'provider':provider.id,'external_id':content.external_id,'score':evaluation.score,'memory':memory_state})
+            if self.clock()>=task['end']:break
+            try:self.executor.policy.permit(provider.id,account,'comment',evaluation)
+            except PermissionError:pass
+            else:
+                text=await self.reader.comment_text(content,evaluation)
+                if text and self.clock()<task['end']:
+                    params={'text':text}
+                    if provider.id=='bilibili':params['oid']=content.metadata['aid']
+                    else:params['post_id']=content.external_id
+                    await self.executor.execute(provider.id,account,'comment',params,'comment:'+content.key,evaluation=evaluation)
+            if self.clock()>=task['end']:break
             try:item=self.executor.policy.permit(provider.id,account,'owner_share',evaluation)
             except PermissionError:continue
             text=await self.reader.share_text(content,evaluation)
-            recipient=item['owner_umo']
-            delivery=hashlib.sha256(f'{content.provider}|{content.external_id}|{recipient}'.encode()).hexdigest()
-            async def send():
-                await self.deliver(recipient,text)
-                return Receipt('succeeded')
-            await self.executor.execute(provider.id,account,'owner_share',{},'owner_share:'+delivery,evaluation=evaluation,operation=send)
+            if self.clock()>=task['end']:break
+            await share(self,content,evaluation,text,item)

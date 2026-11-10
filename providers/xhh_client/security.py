@@ -21,14 +21,14 @@ LONG_RUN_RE = re.compile(r"(.)\1{19,}", re.S)
 MULTI_BLANK_RE = re.compile(r"\n{3,}")
 URL_RE = re.compile(r"https?://[^\s<>()]+", re.I)
 SENSITIVE_KEY_RE = re.compile(
-    r"(?:cookie|token|secret|authorization|pkey|device[_-]?id|"
+    r"(?:cookie|token|secret|authorization|pkey|sessdata|bili[_-]?jct|dedeuserid|buvid[34]|ac_time_value|device[_-]?id|"
     r"signing[_-]?key|^session$|^session[_-]?(?:id|key|token)$)",
     re.I,
 )
 BEARER_RE = re.compile(r"(?i)\b(Bearer|Token)\s+[A-Za-z0-9._~+/=-]{8,}")
 COOKIE_RE = re.compile(r"(?i)\b(cookie|set-cookie)\s*[:=]\s*[^,\s;]+(?:;[^,\r\n]*)?")
 SECRET_ASSIGNMENT_RE = re.compile(
-    r"(?i)\b(access[_-]?token|refresh[_-]?token|token|secret|device[_-]?id|"
+    r"(?i)\b(SESSDATA|BILI_JCT|DedeUserID|buvid3|buvid4|AC_TIME_VALUE|access[_-]?token|refresh[_-]?token|token|secret|device[_-]?id|"
     r"signing[_-]?key|session(?:_id)?|authorization)\b"
     r"(\s*[:=]\s*|%3[dD])([^&\s,;}\]]+)"
 )

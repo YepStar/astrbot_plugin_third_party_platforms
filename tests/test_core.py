@@ -133,3 +133,10 @@ def test_scheduler_claims_once_and_caps_concurrency(tmp_path):
         assert len(started)==2
         await scheduler.close()
     asyncio.run(run())
+
+
+def test_trial_mode_cannot_send_platform_actions():
+ cfg=config();item=cfg['platforms']['p']['accounts']['a']
+ item['actions']['reply']=True;item['reply']={'dry_run':True}
+ with pytest.raises(PermissionError,match='dry_run'):Policy(cfg).permit('p','a','reply')
+ assert Policy(cfg).permit('p','a','browse')

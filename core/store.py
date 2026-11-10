@@ -25,7 +25,14 @@ class Store:
             CREATE TABLE IF NOT EXISTS observations(key TEXT PRIMARY KEY,provider TEXT NOT NULL,account TEXT NOT NULL,
               hour INTEGER NOT NULL,score REAL NOT NULL,at REAL NOT NULL,interests TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY,value TEXT NOT NULL);
-            PRAGMA user_version=1;
+            CREATE TABLE IF NOT EXISTS inbox(key TEXT PRIMARY KEY,provider TEXT NOT NULL,account TEXT NOT NULL,
+              stream TEXT NOT NULL,payload TEXT NOT NULL,state TEXT NOT NULL,attempts INTEGER NOT NULL DEFAULT 0,
+              next_attempt REAL NOT NULL DEFAULT 0,code TEXT NOT NULL DEFAULT '');
+            CREATE TABLE IF NOT EXISTS cursors(provider TEXT NOT NULL,account TEXT NOT NULL,stream TEXT NOT NULL,
+              value TEXT NOT NULL,PRIMARY KEY(provider,account,stream));
+            CREATE TABLE IF NOT EXISTS memory_outbox(key TEXT PRIMARY KEY,payload TEXT NOT NULL,state TEXT NOT NULL,
+              attempts INTEGER NOT NULL DEFAULT 0,next_attempt REAL NOT NULL DEFAULT 0,code TEXT NOT NULL DEFAULT '');
+            PRAGMA user_version=3;
             ''')
         self.path.chmod(0o600)
 
@@ -79,6 +86,7 @@ class Store:
         with self.connect() as db:
             db.execute("UPDATE tasks SET state='unknown',revision=revision+1 WHERE state='executing'")
             db.execute("UPDATE actions SET state='unknown' WHERE state='executing'")
+            db.execute("UPDATE inbox SET state='pending' WHERE state='generating'")
 
     def claim_action(self,key,provider,account,kind,limits,now=None):
         """limits = [(bucket, window_key, hard_max)]. Failed confirmed actions release slots; unknown retain them."""
@@ -100,6 +108,11 @@ class Store:
             result=db.execute("UPDATE actions SET state=?,receipt=? WHERE key=? AND state='executing'",(receipt.state,json.dumps(asdict(receipt)),key))
             if result.rowcount!=1:raise Conflict('action_not_executing')
             if receipt.state=='failed':db.execute('DELETE FROM reservations WHERE action_key=?',(key,))
+
+    def action(self,key):
+        with self.connect() as db:
+            row=db.execute('SELECT * FROM actions WHERE key=?',(key,)).fetchone()
+            return dict(row) if row else None
 
     def actions(self,limit=100):
         with self.connect() as db:return [dict(r) for r in db.execute('SELECT * FROM actions ORDER BY created DESC LIMIT ?',(max(1,min(limit,500)),))]
@@ -125,3 +138,72 @@ class Store:
 
     def set_setting(self,key,value):
         with self.connect() as db:db.execute('INSERT OR REPLACE INTO settings VALUES(?,?)',(key,json.dumps(value)))
+
+    def ingest(self,provider,account,stream,events,cursor,*,initial_ignore=True):
+        """Persist events BEFORE advancing a stream checkpoint, atomically."""
+        from dataclasses import asdict
+        with self.connect() as db:
+            db.execute('BEGIN IMMEDIATE')
+            first=db.execute('SELECT value FROM cursors WHERE provider=? AND account=? AND stream=?',(provider,account,stream)).fetchone() is None
+            for event in events:
+                if (event.provider,event.account,event.stream)!=(provider,account,stream):raise ValueError('event_scope_mismatch')
+                db.execute('INSERT OR IGNORE INTO inbox(key,provider,account,stream,payload,state) VALUES(?,?,?,?,?,?)',
+                    (event.key,provider,account,stream,json.dumps(asdict(event)), 'ignored' if first and initial_ignore else 'pending'))
+            db.execute('INSERT OR REPLACE INTO cursors VALUES(?,?,?,?)',(provider,account,stream,json.dumps(cursor)))
+
+    def cursor(self,provider,account,stream):
+        with self.connect() as db:row=db.execute('SELECT value FROM cursors WHERE provider=? AND account=? AND stream=?',(provider,account,stream)).fetchone()
+        return json.loads(row[0]) if row else None
+
+    def pending_events(self,now,limit=10):
+        with self.connect() as db:return [dict(row) for row in db.execute("SELECT * FROM inbox WHERE state='pending' AND attempts<3 AND next_attempt<=? ORDER BY rowid LIMIT ?",(now,limit))]
+
+    def claim_event(self,key):
+        with self.connect() as db:return db.execute("UPDATE inbox SET state='generating',attempts=attempts+1 WHERE key=? AND state='pending' AND attempts<3",(key,)).rowcount==1
+
+    def finish_event(self,key,state,code='',retry_at=0):
+        if state not in {'pending','succeeded','unknown','failed','ignored'}:raise ValueError('invalid_inbox_state')
+        with self.connect() as db:db.execute("UPDATE inbox SET state=CASE WHEN ?='pending' AND attempts>=3 THEN 'failed' ELSE ? END,code=?,next_attempt=? WHERE key=?",(state,state,code,retry_at,key))
+
+    def apply_daily_plan(self,day,fingerprint,tasks,now):
+        """Replace only unpinned future automatic slots, atomically. Never resurrect manual overrides."""
+        import math
+        validated=[]
+        for index,task in enumerate(tasks):
+            a,b=task['start'],task['end']
+            if type(a)not in (int,float) or type(b)not in (int,float) or not math.isfinite(a+b) or not 0<=a<b:raise ValueError('invalid_plan_window')
+            if b<=now:continue
+            slot=f"{day}:{task.get('source_window',task['window_index'])}:{task['provider']}:{task['account']}"
+            key=f'plan:{day}:{fingerprint}:{index}'
+            params={**task.get('params',{}),'_planner_slot':slot}
+            validated.append((key,task['provider'],task['account'],task['action'],a,b,json.dumps(params),slot))
+        with self.connect() as db:
+            db.execute('BEGIN IMMEDIATE')
+            previous=db.execute("SELECT id,params,pinned,state FROM tasks WHERE origin='automatic' AND id LIKE ?",(f'plan:{day}:%',)).fetchall()
+            blocked={json.loads(row['params']).get('_planner_slot') for row in previous if row['pinned'] or row['state'] not in {'planned','skipped','cancelled'}}
+            db.execute("UPDATE tasks SET state='cancelled',revision=revision+1 WHERE origin='automatic' AND id LIKE ? AND state='planned' AND pinned=0",(f'plan:{day}:%',))
+            for key,pid,aid,kind,a,b,params,slot in validated:
+                if slot in blocked:continue
+                db.execute("INSERT OR IGNORE INTO tasks VALUES(?,1,?,?,?,?,?,'planned','automatic',0,?)",(key,pid,aid,kind,a,b,params))
+            db.execute('INSERT OR REPLACE INTO settings VALUES(?,?)',('plan:'+day,json.dumps({'complete':True,'fingerprint':fingerprint,'at':now})))
+
+    def enqueue_memory(self,key,payload):
+        with self.connect() as db:db.execute("INSERT OR IGNORE INTO memory_outbox(key,payload,state) VALUES(?,?,'pending')",(key,json.dumps(payload)))
+
+    def pending_memory(self,now,limit=20):
+        with self.connect() as db:return [dict(r) for r in db.execute("SELECT * FROM memory_outbox WHERE state='pending' AND next_attempt<=? ORDER BY rowid LIMIT ?",(now,limit))]
+
+    def finish_memory(self,key,saved,now,code=''):
+        with self.connect() as db:db.execute("UPDATE memory_outbox SET state=?,attempts=attempts+1,next_attempt=?,code=? WHERE key=?",('saved' if saved else 'pending',now+900,code,key))
+
+    def retire_memory(self,key,reason):
+        state='superseded' if reason=='generation_changed' else 'review_required'
+        with self.connect() as db:db.execute('UPDATE memory_outbox SET state=?,code=? WHERE key=?',(state,reason,key))
+
+    def memory_status(self):
+        with self.connect() as db:return {r['state']:r['count'] for r in db.execute('SELECT state,COUNT(*) AS count FROM memory_outbox GROUP BY state')}
+
+    def observed_ids(self,provider,account,since):
+        with self.connect() as db:rows=db.execute('SELECT key FROM observations WHERE provider=? AND account=? AND at>=?',(provider,account,since)).fetchall()
+        prefix=f'{provider}:{account}:'
+        return [row['key'][len(prefix):] for row in rows if row['key'].startswith(prefix)]
