@@ -1,5 +1,5 @@
 {
-  "status": "release_0.1.0_comparison_ready",
+  "status": "released_0.1.0_enabled_comparison",
   "date": "2026-11-10",
   "tests_passed": 180,
   "related_suites": {
@@ -20,7 +20,7 @@
   "platform_network_tests": true,
   "live_deployment": true,
   "legacy_uninstalled": false,
-  "repository_published": false,
+  "repository_published": true,
   "next_steps": "DEVELOPMENT.md",
   "legacy_stopped": true,
   "legacy_retained": true,
@@ -38,5 +38,8 @@
     "imported_action_records": 721,
     "imported_budget_windows": 188,
     "legacy_pending_private_review": 0
-  }
+  },
+  "runtime_enabled": true,
+  "live_activation_verified": true,
+  "music_takeover_verified": true
 }
