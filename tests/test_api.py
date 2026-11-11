@@ -211,3 +211,16 @@ async def test_topic_probe_and_storage_operations_are_scoped(app):
  assert result.status_code==400
  result=await client.post('/action',json={'operation':'storage_preview','provider':'xiaoheihe','retention_days':1})
  assert result.status_code==400
+
+async def test_overview_regeneration_is_explicit_and_works_while_paused(app,monkeypatch):
+ app,plugin=app;client=app.test_client()
+ monkeypatch.setattr(plugin,'cutover_ready',lambda:True)
+ plugin.plan_candidates=AsyncMock(return_value=[('bilibili','default')])
+ plugin.daily_planner.regenerate=AsyncMock(return_value={'planned':2,'protected':1})
+ response=await client.post('/action',json={'operation':'plan_regenerate'})
+ assert response.status_code==200 and (await response.get_json())['data']['planned']==2
+ plugin.daily_planner.regenerate.assert_awaited_once_with([('bilibili','default')])
+ assert not plugin.config['enabled']
+ monkeypatch.setattr(plugin,'cutover_ready',lambda:False)
+ response=await client.post('/action',json={'operation':'plan_regenerate'})
+ assert response.status_code==400 and plugin.daily_planner.regenerate.await_count==1

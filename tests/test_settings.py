@@ -18,3 +18,14 @@ def test_partial_global_update_preserves_other_settings_and_model_overrides():
  assert result['model_ids']=={'evaluation':'existing-evaluator','daily_plan':'new-planner'}
  assert previous['model_ids']['daily_plan']=='existing-planner'
  assert 'enabled' not in result and 'platforms' not in result
+
+@pytest.mark.parametrize('value',[True,-1,101,float('nan'),float('inf'),'3'])
+def test_platform_weight_numbers_are_bounded(value):
+ with pytest.raises(ValueError):settings.validate_settings({'platform_weights':{'bilibili':value}}, {})
+
+def test_platform_weight_patch_clear_and_extension_validation():
+ before={'platform_weights':{'bilibili':3,'netease':2}}
+ assert settings.validate_settings({'platform_weights':{'bilibili':None,'xiaoheihe':0}},before)['platform_weights']=={'netease':2,'xiaoheihe':0}
+ assert before['platform_weights']['bilibili']==3
+ with pytest.raises(ValueError):settings.validate_settings({'platform_weights':{'unknown':2}},before)
+ assert settings.validate_settings({'platform_weights':{'custom':1}}, {},providers={'custom'})['platform_weights']=={'custom':1}

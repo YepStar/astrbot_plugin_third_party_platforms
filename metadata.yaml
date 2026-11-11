@@ -1,7 +1,7 @@
 name: astrbot_plugin_third_party_platforms
 display_name: 冷月系—第三方平台
 author: YepStar
-version: 0.2.1
+version: 0.2.2
 desc: 统一规划、浏览与分享第三方平台内容
 astrbot_version: ">=4.29.4"
 repo: https://github.com/YepStar/astrbot_plugin_third_party_platforms

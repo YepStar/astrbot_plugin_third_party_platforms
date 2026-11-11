@@ -1,13 +1,13 @@
 {
-  "status": "released_0.2.1_enabled_comparison",
+  "status": "released_0.2.2_enabled_comparison",
   "date": "2026-11-11",
-  "tests_passed": 213,
+  "tests_passed": 232,
   "related_suites": {
     "netease_browser": 228,
     "memory_branches": 34,
     "intent_bridge_including_command_tests": 345
   },
-  "total_tests_passed": 820,
+  "total_tests_passed": 839,
   "environment": "isolated /tmp source copies in existing AstrBot container, Python 3.12; outbound model/platform writes mocked",
   "main_import": "passed",
   "python_compile": "passed (workspace-safe cache prefix)",
@@ -24,7 +24,10 @@
     "XHH topic probe, searchable checkboxes and save",
     "XHH fallback category mutual exclusion",
     "scoped storage counters and cleanup preview",
-    "Bili detailed interaction permissions/prompts save and account fields"
+    "Bili detailed interaction permissions/prompts save and account fields",
+    "overview regeneration replaces manual add",
+    "save and clear optional platform weights; blank remains automatic",
+    "real DailyPlanner/Store with mocked model generates three rounds in one permission window"
   ],
   "platform_network_tests": true,
   "live_deployment": true,
@@ -81,5 +84,18 @@
     "old_plugins_retained_disabled": true,
     "total_legacy_parity": false
   },
-  "static_module_cache": "Versioned module imports for fields, components and original schema, so previous UI modules cannot hide restored settings."
+  "static_module_cache": "Versioned module imports for fields, components and original schema, so previous UI modules cannot hide restored settings.",
+  "weighted_remaining_planning": {
+    "one_window_multiple_rounds": true,
+    "reference_minutes_default": 30,
+    "optional_weights_default": "automatic",
+    "weight_zero": "excluded from automatic allocation; manual/ongoing events preserved",
+    "bounds": "remaining local day; rest windows respected",
+    "atomic_remaining_daily_capacity": true,
+    "concurrent_claim_protected": true,
+    "manual_overrides_protected": true,
+    "model_failure_keeps_tasks": true,
+    "tomorrow_overnight_tail_preserved": true,
+    "live_forced_regeneration": false
+  }
 }

@@ -3,7 +3,7 @@ const e=(tag,cls='',text='')=>{const n=document.createElement(tag);n.className=c
 const svg=(tag,attrs)=>{const n=document.createElementNS('http://www.w3.org/2000/svg',tag);for(const [k,v]of Object.entries(attrs))n.setAttribute(k,v);return n;};
 const btn=(text,fn)=>{const b=e('button','button secondary',text);b.type='button';b.onclick=async()=>{b.disabled=true;try{await fn();}catch(x){alert(x.message);}finally{b.disabled=false;}};return b;};
 const colors={bilibili:'#53bdb6',xiaoheihe:'#9b81e9',netease:'#e6b164'};
-export function renderEventBoard(container,state,{name,accountName,time,open,add}){
+export function renderEventBoard(container,state,{name,accountName,time,open}){
  container.replaceChildren();const day=state.day_start,end=state.day_end,now=Date.now()/1000;
  const tasks=(state.tasks||[]).filter(t=>t.end>day&&t.start<end&&!['cancelled','skipped'].includes(t.state)).sort((a,b)=>a.start-b.start);
  const left=e('section','panel event-ring-panel'),right=e('section','panel today-events');left.append(e('h2','','24 小时时刻事件环'));

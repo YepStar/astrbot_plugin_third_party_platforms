@@ -115,3 +115,82 @@ def test_restoring_previous_window_does_not_collide_with_cancelled_event_id(tmp_
   assert len(planned)==1
   assert datetime.fromtimestamp(planned[0]['start'],ZoneInfo('Asia/Shanghai')).strftime('%H:%M')=='10:00'
  asyncio.run(run())
+
+def test_force_regenerates_remaining_time_and_preserves_completed_and_manual(tmp_path):
+ async def run():
+  store,now,cfg,generate,planner=setup(tmp_path)
+  await planner.ensure([('p','a')]);completed=store.tasks()[0];assert store.claim_task(completed['id'],completed['start']);store.finish_task(completed['id'],'succeeded')
+  now[0]+=5*3600 # 14:00: morning is over; model index zero now refers to evening.
+  result=await planner.regenerate([('p','a')])
+  assert generate.await_count==2 and result['planned']==1
+  planned=[t for t in store.tasks() if t['state']=='planned']
+  assert len(planned)==1 and planned[0]['start']>now[0]
+  manual=store.create_task('p','a','browse',now[0]+3600,now[0]+4000)
+  result=await planner.regenerate([('p','a')]);assert result['planned']==0
+  assert next(t for t in store.tasks() if t['id']==completed['id'])['state']=='succeeded'
+  assert next(t for t in store.tasks() if t['id']==manual)['state']=='planned'
+ asyncio.run(run())
+
+def test_force_failure_preserves_existing_plan_and_zero_weights_clear_only_automatic(tmp_path):
+ async def run():
+  store,now,cfg,generate,planner=setup(tmp_path);await planner.ensure([('p','a')]);before=store.tasks()
+  generate.side_effect=ValueError('fixture failure')
+  with pytest.raises(ValueError):await planner.regenerate([('p','a')])
+  assert store.tasks()==before
+  cfg['platform_weights']={'p':0}
+  result=await planner.regenerate([('p','a')]);assert result['planned']==0
+  assert not any(t['state']=='planned' for t in store.tasks())
+ asyncio.run(run())
+
+def test_force_protects_tasks_started_while_model_is_generating(tmp_path):
+ async def run():
+  store,now,cfg,generate,planner=setup(tmp_path);cfg['daily_rounds']=1
+  await planner.ensure([('p','a')]);original=store.tasks()[0];now[0]+=3600
+  async def started(*args):
+   assert store.claim_task(original['id'],now[0])
+   return '{"sessions":[{"provider":"p","account":"a","window_index":0}]}'
+  generate.side_effect=started
+  result=await planner.regenerate([('p','a')]);assert result['planned']==0
+  assert len(store.tasks())==1 and store.tasks()[0]['state']=='executing'
+ asyncio.run(run())
+
+def test_force_clips_today_and_preserves_tomorrow_overnight_tail(tmp_path):
+ async def run():
+  store,now,cfg,generate,planner=setup(tmp_path);cfg['windows']=['22:00-02:00'];now[0]+=14*3600 # 23:00
+  end=datetime(2026,11,11,2,tzinfo=ZoneInfo('Asia/Shanghai')).timestamp()
+  key=store.create_task('p','a','browse',now[0],end,params={'_planner_slot':'2026-11-10:0:p:a'},origin='automatic',pinned=False,task_id='plan:2026-11-10:legacy:0');old=store.tasks()[0];now[0]+=60
+  result=await planner.regenerate([('p','a')]);assert result['planned']==1
+  day_end=datetime(2026,11,11,tzinfo=ZoneInfo('Asia/Shanghai')).timestamp()
+  planned=[t for t in store.tasks() if t['state']=='planned']
+  assert any(t['start']>=now[0] and t['end']<=day_end for t in planned)
+  assert any(t['start']==day_end and t['end']==old['end'] for t in planned)
+ asyncio.run(run())
+
+def test_force_does_not_resurrect_manual_cancellation(tmp_path):
+ async def run():
+  store,now,cfg,generate,planner=setup(tmp_path);await planner.ensure([('p','a')]);task=store.tasks()[0]
+  store.change_task(task['id'],task['revision'],cancel=True)
+  await planner.regenerate([('p','a')])
+  assert not any(t['state']=='planned' for t in store.tasks())
+ asyncio.run(run())
+
+def test_one_permission_window_can_schedule_multiple_independent_rounds(tmp_path):
+ async def run():
+  store,now,cfg,generate,planner=setup(tmp_path)
+  cfg.update(windows=['10:00-12:00'],daily_rounds=3,session_minutes=30)
+  generate.return_value='{"sessions":[{"provider":"p","account":"a","window_index":0},{"provider":"p","account":"a","window_index":1},{"provider":"p","account":"a","window_index":2}]}'
+  result=await planner.regenerate([('p','a')]);assert result['planned']==3
+  planned=[t for t in store.tasks() if t['state']=='planned']
+  assert len(planned)==3 and all(t['end']-t['start']==1800 for t in planned)
+  assert all(a['end']<=b['start'] for a,b in zip(planned,planned[1:]))
+  store.change_task(planned[0]['id'],planned[0]['revision'],cancel=True)
+  await planner.regenerate([('p','a')])
+  assert len([t for t in store.tasks() if t['state']=='planned'])==2
+ asyncio.run(run())
+
+def test_overlapping_windows_do_not_create_simultaneous_rounds_for_one_account(tmp_path):
+ async def run():
+  store,now,cfg,generate,planner=setup(tmp_path);cfg.update(windows=['10:00-11:00','10:00-11:00'],daily_rounds=2)
+  generate.return_value='{"sessions":[{"provider":"p","account":"a","window_index":0},{"provider":"p","account":"a","window_index":1}]}'
+  result=await planner.regenerate([('p','a')]);assert result['planned']==1
+ asyncio.run(run())

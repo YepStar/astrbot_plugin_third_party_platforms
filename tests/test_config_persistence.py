@@ -20,3 +20,11 @@ def test_extension_platform_and_options_survive_real_config_reload(tmp_path):
  config.save_config()
  loaded=AstrBotConfig(str(p),schema=schema)
  assert loaded['platforms']['future_media']['accounts']['account']['browse']['provider_options']['category']=='games'
+
+
+def test_platform_weights_survive_real_config_reload(tmp_path):
+ schema=json.loads((Path(__file__).parents[1]/'_conf_schema.json').read_text())
+ p=tmp_path/'config.json';config=AstrBotConfig(str(p),schema=schema)
+ config['platform_weights']={'bilibili':3.5,'future_media':0}
+ config.save_config();loaded=AstrBotConfig(str(p),schema=schema)
+ assert loaded['platform_weights']=={'bilibili':3.5,'future_media':0}

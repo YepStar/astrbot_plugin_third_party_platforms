@@ -14,9 +14,26 @@ def window_for(day,window,timezone='Asia/Shanghai'):
     return start.timestamp(),end.timestamp()
 
 
-def choose_provider(candidates,preferences,hour,seed,exploration=0.15):
+def choose_provider(candidates,preferences,hour,seed,exploration=0.15,weights=None):
     if not candidates:raise ValueError('no_eligible_provider')
     if not 0<=exploration<=1:raise ValueError('invalid_exploration')
+    if weights and any(p in weights for p,_ in candidates):
+        import math
+        if any(type(v)not in (int,float) or not math.isfinite(v) or not 0<=v<=100 for v in weights.values()):raise ValueError('invalid_platform_weights')
+        grouped={p:[c for c in candidates if c[0]==p] for p in sorted({c[0] for c in candidates})}
+        def automatic_mass(pid):
+            rows=[x for x in preferences if x['provider']==pid and x['hour']==hour]
+            return max(.1,max((5+(x['score']-5)*min(1,x['weight']/5) for x in rows),default=5)/5)
+        masses=[(p,weights[p] if p in weights else automatic_mass(p)) for p in grouped]
+        total=math.fsum(v for _,v in masses)
+        if total<=0:raise ValueError('no_eligible_provider')
+        draw=int(hashlib.sha256(f'{seed}|platform'.encode()).hexdigest()[:12],16)/16**12*total
+        selected=next(p for p,v in masses if v>0)
+        for pid,mass in masses:
+            if mass<=0:continue
+            selected=pid;draw-=mass
+            if draw<0:break
+        return choose_provider(grouped[selected],preferences,hour,str(seed)+'|account',exploration)
     number=int(hashlib.sha256(str(seed).encode()).hexdigest()[:12],16)
     if number/16**12<exploration:return candidates[number%len(candidates)]
     def rank(candidate):
@@ -63,3 +80,20 @@ def allowed_intervals(day,windows,rest_windows,timezone='Asia/Shanghai'):
             pieces=next_pieces
         result.extend({'start':a,'end':b,'source_window':source_index} for a,b in pieces if b>a)
     return result
+
+def round_intervals(intervals,now,minutes=30,*,until=None,maximum_candidates=192):
+    """A permission window may contain many independently selected rounds."""
+    if type(minutes)is not int or not 1<=minutes<=180:raise ValueError('invalid_session_minutes')
+    slots=[];length=minutes*60
+    for window in intervals:
+        cursor=window['start']
+        while cursor<window['end']:
+            finish=min(cursor+length,window['end'])
+            start=max(now,cursor);end=min(finish,until) if until is not None else finish
+            if end>start:slots.append({**window,'start':start,'end':end,'source_slot':cursor})
+            cursor=finish
+    slots.sort(key=lambda w:(w['start'],w['end'],w['source_window']))
+    # Keep the full day represented even with many long, overlapping input windows.
+    if len(slots)>maximum_candidates:
+        slots=[slots[i*(len(slots)-1)//(maximum_candidates-1)] for i in range(maximum_candidates)]
+    return slots

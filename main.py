@@ -137,9 +137,7 @@ class ThirdPartyPlatforms(Star):
                 except Exception as exc:logger.warning('Platform inbox %s failed: %s',pid,type(exc).__name__)
         await self.inbox.process()
 
-    async def ensure_plan(self):
-        if not self.config.get('enabled',False):return
-        zone=ZoneInfo(self.config.get('timezone','Asia/Shanghai'));now=time.time();day=datetime.fromtimestamp(now,zone).date()
+    async def plan_candidates(self):
         candidates=[]
         for pid,platform in self.config.get('platforms',{}).items():
             if not platform.get('enabled') or pid not in self.registry.providers:continue
@@ -149,8 +147,11 @@ class ThirdPartyPlatforms(Star):
                 if pid=='netease':
                     if account.get('actions',{}).get('listen') and (await self.music.status(aid)).get('ready'):candidates.append((pid,aid))
                 elif account.get('browse',{}).get('browse_enabled',True) and self.secrets.read(pid,aid):candidates.append((pid,aid))
-        if not candidates:return
-        await self.daily_planner.ensure(candidates)
+        return candidates
+
+    async def ensure_plan(self):
+        if not self.config.get('enabled',False):return
+        await self.daily_planner.ensure(await self.plan_candidates())
 
     def cutover_ready(self):
         return all(deployment_checks(self).values()) and not self.closed
@@ -381,21 +382,19 @@ class ThirdPartyPlatforms(Star):
                     if raw.get('code')!=0:raise ValueError('video_unavailable')
                     visual=await adapter.visual(aid,raw['data'])
                     result={'ready':bool(visual),'status':adapter.last_visual}
-                elif operation=='plan_preview':
+                elif operation in {'plan_preview','plan_regenerate'}:
                     if not self.cutover_ready():raise ValueError('migration_not_ready')
-                    candidates=[]
-                    for pid,p in self.config.get('platforms',{}).items():
-                        if not p.get('enabled'):continue
-                        for aid,a in p.get('accounts',{}).items():
-                            if a.get('enabled') and (self.secrets.read(pid,aid) if pid!='netease' else (await self.music.status(aid)).get('ready')):candidates.append((pid,aid))
-                    await self.daily_planner.ensure(candidates)
-                    result={'tasks':len(self.store.tasks())}
+                    candidates=await self.plan_candidates()
+                    if operation=='plan_regenerate':result=await self.daily_planner.regenerate(candidates)
+                    else:
+                        await self.daily_planner.ensure(candidates)
+                        result={'tasks':len(self.store.tasks())}
                 elif operation=='model_probe':
                     checked=parse_object(await self.generate('diagnostic',{'instruction':'Return JSON only {\"ok\":true}. Connectivity check only, no tools or external actions.'}))
                     if checked.get('ok') is not True:raise ValueError('model_probe_failed')
                     result={'ready':True}
                 elif operation=='global_save':
-                    try:values=validate_settings(data['values'],self.config)
+                    try:values=validate_settings(data['values'],self.config,providers=self.registry.providers)
                     except ValueError as exc:return {'status':'error','message':settings_error(exc)},400
                     previous={k:self.config.get(k) for k in values};missing=set(values)-self.config.keys()
                     self.config.update(values)

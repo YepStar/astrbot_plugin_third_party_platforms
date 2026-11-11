@@ -178,15 +178,18 @@ class Store:
         if state not in {'pending','succeeded','unknown','failed','ignored'}:raise ValueError('invalid_inbox_state')
         with self.connect() as db:db.execute("UPDATE inbox SET state=CASE WHEN ?='pending' AND attempts>=3 THEN 'failed' ELSE ? END,code=?,next_attempt=? WHERE key=?",(state,state,code,retry_at,key))
 
-    def apply_daily_plan(self,day,fingerprint,tasks,now):
+    def apply_daily_plan(self,day,fingerprint,tasks,now,*,round_limit=None,day_start=0,day_end=1e20,remaining_only=False):
         """Replace only unpinned future automatic slots, atomically. Never resurrect manual overrides."""
         import math
         validated=[]
         for index,task in enumerate(tasks):
             a,b=task['start'],task['end']
             if type(a)not in (int,float) or type(b)not in (int,float) or not math.isfinite(a+b) or not 0<=a<b:raise ValueError('invalid_plan_window')
-            if b<=now:continue
+            a=max(a,now)
+            if remaining_only:b=min(b,day_end)
+            if b<=a:continue
             slot=f"{day}:{task.get('source_window',task['window_index'])}:{task['provider']}:{task['account']}"
+            if 'source_slot' in task:slot+=':round:'+str(task['source_slot'])
             key=f'plan:{day}:{fingerprint}:{index}'
             params={**task.get('params',{}),'_planner_slot':slot}
             validated.append((key,task['provider'],task['account'],task['action'],a,b,json.dumps(params),slot))
@@ -194,23 +197,37 @@ class Store:
             db.execute('BEGIN IMMEDIATE')
             previous=db.execute("SELECT * FROM tasks WHERE origin='automatic' AND id LIKE ?",(f'plan:{day}:%',)).fetchall()
             blocked={json.loads(row['params']).get('_planner_slot') for row in previous if row['pinned'] or row['state'] not in {'planned','skipped','cancelled'}}
-            retained=set()
+            # Recheck after model IO: the scheduler may have claimed an old event meanwhile.
+            protected=db.execute("SELECT * FROM tasks WHERE end>? AND start<? AND (state IN ('executing','succeeded','failed','unknown') OR (state='planned' AND (pinned=1 OR (origin='automatic' AND id NOT LIKE ?))))",(day_start,day_end,f'plan:{day}:%')).fetchall()
+            capacity=len(validated) if round_limit is None else max(0,round_limit-len(protected))
+            legacy_blocks={json.loads(r['params']).get('_planner_slot') for r in previous if r['pinned']}
+            occupied=[r for r in protected if r['state'] in {'planned','executing'}]
+            accepted=[];retained=set();created=0;reused=0;replaced=0
             for key,pid,aid,kind,a,b,params,slot in validated:
-                if slot in blocked:continue
+                if len(retained)>=capacity:break
+                if any(r['provider']==pid and r['account']==aid and r['start']<b and r['end']>a for r in occupied):continue
+                if any(p==pid and q==aid and low<b and high>a for p,q,low,high in accepted):continue
+                if slot in blocked or slot.split(':round:',1)[0] in legacy_blocks:continue
                 # Reuse the same live event when only planner settings/params changed.
                 existing=next((r for r in previous if r['state']=='planned' and not r['pinned'] and r['id'] not in retained and (r['provider'],r['account'],r['action'],r['start'],r['end'])==(pid,aid,kind,a,b)),None)
                 if existing:
-                    retained.add(existing['id'])
+                    retained.add(existing['id']);reused+=1
                     if existing['params']!=params:db.execute('UPDATE tasks SET params=?,revision=revision+1 WHERE id=?',(params,existing['id']))
                 else:
                     if db.execute('SELECT 1 FROM tasks WHERE id=?',(key,)).fetchone():key+=':'+uuid.uuid4().hex[:10]
                     db.execute("INSERT OR IGNORE INTO tasks VALUES(?,1,?,?,?,?,?,'planned','automatic',0,?)",(key,pid,aid,kind,a,b,params))
-                    retained.add(key)
+                    retained.add(key);created+=1
+                accepted.append((pid,aid,a,b))
             for row in previous:
-                if row['state']=='planned' and not row['pinned'] and row['id'] not in retained:
-                    params={**json.loads(row['params']),'_superseded':True}
+                if row['state']=='planned' and not row['pinned'] and row['id'] not in retained and row['end']>now and (not remaining_only or row['start']<day_end):
+                    if remaining_only and row['end']>day_end:
+                        # Preserve tomorrow's part of a still-unstarted overnight event.
+                        carry=row['id']+':carry:'+uuid.uuid4().hex[:10]
+                        db.execute("INSERT INTO tasks VALUES(?,1,?,?,?,?,?,'planned','automatic',0,?)",(carry,row['provider'],row['account'],row['action'],day_end,row['end'],row['params']))
+                    params={**json.loads(row['params']),'_superseded':True};replaced+=1
                     db.execute("UPDATE tasks SET state='cancelled',params=?,revision=revision+1 WHERE id=?",(json.dumps(params),row['id']))
             db.execute('INSERT OR REPLACE INTO settings VALUES(?,?)',('plan:'+day,json.dumps({'complete':True,'fingerprint':fingerprint,'at':now})))
+            return {'planned':len(retained),'created':created,'reused':reused,'replaced':replaced,'protected':len(protected),'day':day,'remaining_only':remaining_only}
 
     def enqueue_memory(self,key,payload):
         with self.connect() as db:db.execute("INSERT OR IGNORE INTO memory_outbox(key,payload,state) VALUES(?,?,'pending')",(key,json.dumps(payload)))

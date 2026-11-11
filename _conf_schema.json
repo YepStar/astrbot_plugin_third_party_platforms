@@ -124,5 +124,15 @@
     "type": "int",
     "description": "视频下载大小上限（MB，8至256）",
     "default": 96
+  },
+  "platform_weights": {
+    "type": "dict",
+    "description": "可选平台相对权重：留空自主选择；数字0–100，0不自动安排。建议在工作台全局配置中编辑。",
+    "default": {}
+  },
+  "session_minutes": {
+    "type": "int",
+    "description": "每轮参考时长（分钟，1–180）；一个允许时间窗内可安排多轮，边界处可缩短",
+    "default": 30
   }
 }
