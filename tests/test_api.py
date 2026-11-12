@@ -224,3 +224,23 @@ async def test_overview_regeneration_is_explicit_and_works_while_paused(app,monk
  monkeypatch.setattr(plugin,'cutover_ready',lambda:False)
  response=await client.post('/action',json={'operation':'plan_regenerate'})
  assert response.status_code==400 and plugin.daily_planner.regenerate.await_count==1
+
+
+@pytest.mark.parametrize('state', ['succeeded', 'failed', 'unknown', None])
+async def test_listen_forwards_executor_receipt(app, state):
+ import time
+ _,plugin=app
+ receipt=main.Receipt(state,code='fixture') if state else None
+ plugin.executor.execute=AsyncMock(return_value=receipt)
+ result=await plugin.listen({'id':'fixture','account':'default','params':{},'end':time.time()+60})
+ assert result.state==(state or 'unknown')
+ if receipt is not None:assert result is receipt
+ else:assert result.code=='existing_action'
+
+
+async def test_expired_listen_is_not_success(app):
+ _,plugin=app
+ plugin.executor.execute=AsyncMock()
+ result=await plugin.listen({'end':0})
+ assert result.state=='failed' and result.code=='task_window_expired'
+ plugin.executor.execute.assert_not_awaited()

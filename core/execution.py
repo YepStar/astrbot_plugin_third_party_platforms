@@ -18,7 +18,9 @@ class Executor:
             try:
                 # Re-evaluate configuration at the actual external-action boundary.
                 self.policy.permit(provider,account,action,evaluation)
-                result=await asyncio.wait_for(operation() if operation else adapter.execute(account,action,params,key),self.timeout)
+                # Session actions include real-time playback, not just one HTTP request.
+                timeout=self.timeout if operation is not None else getattr(adapter,'action_timeouts',{}).get(action,self.timeout)
+                result=await asyncio.wait_for(operation() if operation else adapter.execute(account,action,params,key),timeout)
                 if not isinstance(result,Receipt):raise TypeError('invalid_provider_receipt')
             except asyncio.CancelledError:
                 self.store.finish_action(key,Receipt('unknown',code='cancelled_during_io'));raise
@@ -48,7 +50,8 @@ class Scheduler:
         state='failed'
         try:
             handler=self.handlers[task['action']]
-            await handler(task);state='succeeded'
+            result=await handler(task)
+            state=result.state if isinstance(result,Receipt) else 'succeeded'
         except asyncio.CancelledError:state='unknown';raise
         except Exception:state='failed'
         finally:

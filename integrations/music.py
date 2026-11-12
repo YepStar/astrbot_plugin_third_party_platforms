@@ -4,6 +4,8 @@ from ..core.models import Receipt
 class Music:
     id='netease'
     capabilities=frozenset({'listen'})
+    # Up to 1800 seconds of audio plus selection, reflection and publication I/O.
+    action_timeouts={'listen':3600}
     owner='astrbot_plugin_third_party_platforms'
     def __init__(self,context):self.context=context;self.owned=False;self.publication_gate=None
     def facade(self):

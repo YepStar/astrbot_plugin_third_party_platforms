@@ -21,7 +21,7 @@ from .core.research import public_query
 from .core.configuration import account as normalize_account
 from .core.extensions import manifest as provider_manifest,options as provider_options
 from .core.store import Store
-from .core.models import Registry,Content
+from .core.models import Registry,Content,Receipt
 from .core.policy import Policy
 from .core.execution import Executor,Scheduler
 from .core.planning import Planner,window_for
@@ -115,8 +115,9 @@ class ThirdPartyPlatforms(Star):
         except (ValueError,PermissionError,RuntimeError):return False
 
     async def listen(self,task):
-        if time.time()>=task['end']:return
-        await self.executor.execute('netease',task['account'],'listen',task['params'],'listen:'+task['id'])
+        if time.time()>=task['end']:return Receipt('failed',code='task_window_expired')
+        result=await self.executor.execute('netease',task['account'],'listen',task['params'],'listen:'+task['id'])
+        return result if result is not None else Receipt('unknown',code='existing_action')
 
     async def sync_music_ownership(self):
         platform=self.config.get('platforms',{}).get('netease',{})
