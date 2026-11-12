@@ -200,7 +200,7 @@ class ThirdPartyPlatforms(Star):
         return re.fullmatch(r'[^:]+:FriendMessage:\d+',umo) and umo in self.config.get('control_umos',[])
 
     def intent_bridge_tool_ready(self,name):
-        return name in {'third_party_schedule_list','third_party_schedule_change','third_party_research','third_party_publish_dynamic'} and not self.closed
+        return name in {'third_party_schedule_list','third_party_schedule_change','third_party_schedule_regenerate','third_party_research','third_party_publish_dynamic'} and not self.closed
 
     def intent_bridge_context(self,event):
         if not self.authorized(event):return {}
@@ -294,6 +294,25 @@ class ThirdPartyPlatforms(Star):
         if not self.authorized(event):return {'error':'not_authorized'}
         return {'timezone':self.config.get('timezone','Asia/Shanghai'),'tasks':self.store.tasks(time.time()-3600,time.time()+86400)}
 
+    @filter.llm_tool(name='third_party_schedule_regenerate')
+    async def schedule_regenerate(self,event:AstrMessageEvent):
+        """仅在用户明确要求重新规划第三方平台日程时，重排今日剩余自动安排。
+        保留已完成、正在执行及固定任务；不重置次数和预算，不立即浏览、听歌或发布。
+        查看日程用 third_party_schedule_list，挪动或取消单项用 third_party_schedule_change。
+        """
+        if not self.authorized(event):return {'error':'not_authorized'}
+        try:
+            async with self.api_lock:
+                return await self.regenerate_remaining_schedule()
+        except (ValueError,PermissionError,RuntimeError) as exc:
+            return {'error':str(exc) or type(exc).__name__}
+
+    async def regenerate_remaining_schedule(self,candidates=None):
+        """Shared entry for dashboard and tool; planner preserves protected tasks."""
+        if not self.cutover_ready():raise ValueError('migration_not_ready')
+        if candidates is None:candidates=await self.plan_candidates()
+        return await self.daily_planner.regenerate(candidates)
+
     @filter.llm_tool(name='third_party_schedule_change')
     async def schedule_change(self,event:AstrMessageEvent,operation:str,provider:str='',account:str='',task_id:str='',revision:int=0,start:float=0,end:float=0):
         """创建、移动或取消第三方浏览安排，修改前先查日程版本，不能执行平台发帖。
@@ -386,7 +405,7 @@ class ThirdPartyPlatforms(Star):
                 elif operation in {'plan_preview','plan_regenerate'}:
                     if not self.cutover_ready():raise ValueError('migration_not_ready')
                     candidates=await self.plan_candidates()
-                    if operation=='plan_regenerate':result=await self.daily_planner.regenerate(candidates)
+                    if operation=='plan_regenerate':result=await self.regenerate_remaining_schedule(candidates)
                     else:
                         await self.daily_planner.ensure(candidates)
                         result={'tasks':len(self.store.tasks())}

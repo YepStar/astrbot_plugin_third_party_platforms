@@ -244,3 +244,35 @@ async def test_expired_listen_is_not_success(app):
  result=await plugin.listen({'end':0})
  assert result.state=='failed' and result.code=='task_window_expired'
  plugin.executor.execute.assert_not_awaited()
+
+
+async def test_schedule_regenerate_tool_and_dashboard_use_same_planner(app, monkeypatch):
+ quart_app,plugin=app
+ plugin.config['control_umos']=['qq_bot:FriendMessage:1']
+ monkeypatch.setattr(plugin,'cutover_ready',lambda:True)
+ plugin.plan_candidates=AsyncMock(return_value=[('netease','default')])
+ plugin.daily_planner.regenerate=AsyncMock(return_value={'created':2,'cancelled':1})
+ result=await plugin.schedule_regenerate(NS(unified_msg_origin='qq_bot:FriendMessage:1'))
+ assert result=={'created':2,'cancelled':1}
+ plugin.daily_planner.regenerate.assert_awaited_once_with([('netease','default')])
+ assert plugin.store.actions()==[]
+ plugin.daily_planner.regenerate.reset_mock()
+ response=await quart_app.test_client().post('/action',json={'operation':'plan_regenerate'})
+ assert response.status_code==200
+ plugin.daily_planner.regenerate.assert_awaited_once_with([('netease','default')])
+
+
+async def test_schedule_regenerate_tool_denies_other_users_groups_and_unready_deployment(app, monkeypatch):
+ _,plugin=app
+ plugin.config['control_umos']=['qq_bot:FriendMessage:1']
+ plugin.plan_candidates=AsyncMock()
+ plugin.daily_planner.regenerate=AsyncMock()
+ for origin in ['qq_bot:FriendMessage:2','qq_bot:GroupMessage:1']:
+  assert await plugin.schedule_regenerate(NS(unified_msg_origin=origin))=={'error':'not_authorized'}
+ monkeypatch.setattr(plugin,'cutover_ready',lambda:False)
+ assert await plugin.schedule_regenerate(NS(unified_msg_origin='qq_bot:FriendMessage:1'))=={'error':'migration_not_ready'}
+ plugin.plan_candidates.assert_not_awaited()
+ plugin.daily_planner.regenerate.assert_not_awaited()
+ assert plugin.intent_bridge_tool_ready('third_party_schedule_regenerate')
+ plugin.closed=True
+ assert not plugin.intent_bridge_tool_ready('third_party_schedule_regenerate')
