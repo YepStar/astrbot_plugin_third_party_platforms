@@ -276,3 +276,71 @@ async def test_schedule_regenerate_tool_denies_other_users_groups_and_unready_de
  assert plugin.intent_bridge_tool_ready('third_party_schedule_regenerate')
  plugin.closed=True
  assert not plugin.intent_bridge_tool_ready('third_party_schedule_regenerate')
+
+
+async def test_migration_review_choices_round_trip_without_config_or_task_changes(app):
+ app,plugin=app;client=app.test_client();before=json.loads(json.dumps(plugin.config))
+ response=await client.get('/state');initial=(await response.get_json())['data']['bili_migration_review']
+ assert initial['total']==54 and initial['answered']==0
+ response=await client.post('/action',json={'operation':'bili_migration_review_save','revision':0,'choices':{'ENABLE_MOOD':'integrate','ENABLE_BANGUMI':'skip'}})
+ assert response.status_code==200
+ data=(await response.get_json())['data'];assert data['answered']==2 and data['revision']==1
+ state=(await (await client.get('/state')).get_json())['data']
+ assert state['bili_migration_review']['choices']=={'ENABLE_MOOD':'integrate','ENABLE_BANGUMI':'skip'}
+ assert plugin.config==before and plugin.store.actions()==[] and plugin.store.tasks()==[]
+ response=await client.post('/action',json={'operation':'bili_migration_review_save','revision':0,'choices':{}})
+ assert response.status_code==409
+ assert plugin.store.setting('bili_migration_review')['choices']['ENABLE_MOOD']=='integrate'
+
+
+async def test_selected_media_uses_provider_override_and_real_parts(app):
+ app,plugin=app
+ plugin.config['provider_id']='default-fixture'
+ plugin.config['platforms']={'bilibili':{'accounts':{'one':{'models':{'video_direct_provider':'video-fixture','image_model':'image-fixture'},'vision':{'video_direct_model':'direct-model','image_model_name':'image-model'}}}}}
+ plugin.context.llm_generate=AsyncMock(return_value=NS(completion_text='{"observed":true}'))
+ parts=[{'type':'video_url','video_url':{'url':'data:video/mp4;base64,Zml4dHVyZQ=='},'fps':2}]
+ await plugin.generate('video_direct',{'platform':'bilibili','account':'one','_validated_video_parts':parts})
+ kwargs=plugin.context.llm_generate.await_args.kwargs
+ assert kwargs['chat_provider_id']=='video-fixture' and kwargs['model']=='direct-model'
+ assert kwargs['contexts'][0]['content']==parts and 'Zml4dHVyZQ' not in kwargs['prompt']
+ await plugin.generate('private_image',{'platform':'bilibili','account':'one','_validated_image_urls':['data:image/jpeg;base64,Zml4dHVyZQ==']})
+ kwargs=plugin.context.llm_generate.await_args.kwargs
+ assert kwargs['chat_provider_id']=='image-fixture' and kwargs['model']=='image-model' and len(kwargs['image_urls'])==1
+
+
+async def test_bili_tools_never_grant_external_messages_owner_authority(app):
+ app,plugin=app;event=NS(unified_msg_origin='bilibili:FriendMessage:42',message_obj=NS(message_id='fixture'))
+ assert (await plugin.bili_query(event,'activity'))['error']=='not_authorized'
+ assert (await plugin.bili_action(event,'block_user',uid='123'))['error']=='not_authorized'
+ assert plugin.store.actions()==[]
+
+
+async def test_bili_tool_block_never_targets_owner_even_when_enabled(app,monkeypatch):
+ app,plugin=app;monkeypatch.setattr(plugin,'cutover_ready',lambda:True)
+ plugin.config.update(enabled=True,control_umos=['qq:FriendMessage:42'])
+ plugin.config['platforms']={'bilibili':{'enabled':True,'accounts':{'one':{'enabled':True,'owner_uid':'42','safety':{'auto_block':True}}}}}
+ event=NS(unified_msg_origin='qq:FriendMessage:42',message_obj=NS(message_id='fixture'))
+ assert 'error' in await plugin.bili_action(event,'block_user',account='one',uid='42')
+ assert plugin.store.actions()==[]
+
+
+async def test_summary_archive_api_does_not_publish(app):
+ app,plugin=app;plugin.config['platforms']={'bilibili':{'accounts':{'one':{}}}}
+ plugin.store.set_setting('bili_summary:one:daily:2026-11-13',{'kind':'daily','period':'2026-11-13','text':'真实归档'})
+ response=await app.test_client().post('/action',json={'operation':'summary_archive','account':'one'})
+ assert response.status_code==200 and (await response.get_json())['data']['records'][0]['text']=='真实归档'
+ assert plugin.store.actions()==[]
+
+async def test_music_account_score_overrides_global_fallback(app,monkeypatch):
+ app,plugin=app
+ plugin.config.update(enabled=True,share_min_score=9,comment_min_score=9)
+ plugin.config['platforms']={'netease':{'enabled':True,'accounts':{'default':{
+   'enabled':True,'actions':{'listen':True},'share_min_score':5,'comment_min_score':5}}}}
+ monkeypatch.setattr(plugin,'cutover_ready',lambda:True)
+ from importlib import import_module
+ Evaluation=import_module(base+'.core.models').Evaluation
+ plugin.reader.evaluate=AsyncMock(return_value=Evaluation(6,'reason','evidence',True))
+ for action in ['share','invite','comment']:
+  assert await plugin.music_publication_gate(action,{'id':1,'name':'song'},{'lyric':'public lyric'})
+ plugin.config['platforms']['netease']['accounts']['default']['share_min_score']=None
+ assert not await plugin.music_publication_gate('share',{'id':1,'name':'song'},{'lyric':'public lyric'})

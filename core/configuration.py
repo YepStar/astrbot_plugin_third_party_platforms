@@ -9,6 +9,9 @@ FIELDS={'fallback_sources','browse_count','share_gap_seconds','dry_run','max_rep
 def number(value,low,high,integer=False):
  if type(value) not in (int,float) or not math.isfinite(value) or not low<=value<=high or (integer and int(value)!=value):raise ValueError('invalid_numeric_setting')
  return int(value) if integer else float(value)
+def optional_score(value):
+ if value is None or (isinstance(value,str) and not value.strip()):return None
+ return number(value,1,10)
 def flag(values,key,default=False):
  value=values.get(key,default)
  if type(value)is not bool:raise ValueError('invalid_switch')
@@ -48,8 +51,8 @@ def account(provider,values,previous=None,*,capabilities=None):
   'owner_bili_name':text(values,'owner_bili_name',80),
   'self_uid':text(values,'self_uid',80),'owner_uid':text(values,'owner_uid',80),
   'share_gap_seconds':number(values.get('share_gap_seconds',7200),0,86400,True),
-  'share_min_score':number(values.get('share_min_score',8),1,10),
-  'comment_min_score':number(values.get('comment_min_score',8),1,10),
+  'share_min_score':optional_score(values.get('share_min_score')),
+  'comment_min_score':optional_score(values.get('comment_min_score')),
   'daily_limits':{'browse':number(values.get('daily_browse_limit',2),0,100,True),
     'owner_share':number(values.get('daily_share_limit',1),0,100,True),
     'reply':number(values.get('daily_reply_limit',20),0,1000,True),

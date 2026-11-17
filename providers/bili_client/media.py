@@ -22,7 +22,7 @@ class FrameSource:
             raise
 
     @asynccontextmanager
-    async def capture(self,bvid):
+    async def download(self,bvid):
         if not re.fullmatch(r'BV[0-9A-Za-z]{10}',bvid):raise ValueError('invalid_media_id')
         maximum=max(8,min(256,int(self.settings.get('vision_max_mb',96))))*1024*1024
         count=max(1,min(12,int(self.settings.get('vision_frame_count',5))))
@@ -39,7 +39,7 @@ class FrameSource:
             args=['yt-dlp','--quiet','--no-warnings','--no-progress','--no-playlist','--retries','1','--fragment-retries','1',
                   '--max-filesize',str(maximum),'--socket-timeout','15','--cookies',str(cookie),
                   '--add-header','Referer: https://www.bilibili.com',
-                  '--format','bestvideo[height<=360]/bestvideo[width<=360]/best[height<=360]/worst[vcodec!=none]',
+                  '--format',('best[height<=360][acodec!=none]/bestvideo[height<=360]+bestaudio/best[height<=360]' if self.settings.get('video_direct_format','none')!='none' else 'bestvideo[height<=360]/bestvideo[width<=360]/best[height<=360]/worst[vcodec!=none]'),
                   '-o',str(root/'video.%(ext)s'),*proxy,'https://www.bilibili.com/video/'+bvid]
             code,_,_=await self._run_process(*args,timeout=120)
             cookie.unlink(missing_ok=True)
@@ -47,14 +47,19 @@ class FrameSource:
             if code!=0 or not candidates:raise RuntimeError('video_download_unavailable')
             video=max(candidates,key=lambda p:p.stat().st_size)
             if video.stat().st_size>maximum:raise ValueError('video_size_limit')
+            yield video
+
+    @asynccontextmanager
+    async def capture(self,bvid):
+        count=max(1,min(12,int(self.settings.get('vision_frame_count',5))))
+        async with self.download(bvid) as video:
             frames=await self._extract_video_frames(str(video),count=count)
-            duration=self.sample_duration
             if not frames:raise RuntimeError('video_frames_unavailable')
             result=[]
             for file in frames:
                 index=int(Path(file).stem.rsplit('_',1)[-1])
                 if Path(file).stat().st_size>2_000_000:raise ValueError('frame_size_limit')
-                result.append({'path':file,'seconds':round(duration*(index+1)/(count+1),2)})
+                result.append({'path':file,'seconds':round(self.sample_points[index],2)})
             yield result
 
     async def _extract_video_frames(self, video_path, count=5):
@@ -73,9 +78,20 @@ class FrameSource:
             import math
             self.sample_duration=duration
             if not math.isfinite(duration) or duration<=0:return []
+            minutes=int(self.settings.get('video_segment_minutes',0))
+            segments=max(1,min(6,int(self.settings.get('video_segment_max_count',3))))
+            if minutes:
+                span=minutes*60
+                total=max(1,math.ceil(duration/span))
+                chosen=sorted(set(round(i*(total-1)/max(1,min(total,segments)-1)) for i in range(min(total,segments))))
+                self.sample_points=[]
+                per=max(1,min(12//len(chosen),max(2,count//len(chosen))))
+                for segment in chosen:
+                    start=segment*span;end=min(duration,start+span)
+                    self.sample_points.extend(start+(end-start)*(j+1)/(per+1) for j in range(per))
+            else:self.sample_points=[duration*(i+1)/(count+1) for i in range(count)]
             frames = []
-            for i in range(count):
-                ts = duration * (i + 1) / (count + 1)
+            for i,ts in enumerate(self.sample_points):
                 frame_path = os.path.join(frame_dir, f"frame_{i}.jpg")
                 code, _, _ = await self._run_process(
                     "ffmpeg", "-y", "-ss", f"{ts:.2f}", "-i", video_path,

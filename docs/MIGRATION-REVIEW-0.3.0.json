@@ -1,0 +1,455 @@
+{
+  "removed": [
+    {
+      "key": "OWNER_NAME",
+      "description": "【账号】主人名称（用于提示词）",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "USE_ASTRBOT_PERSONA",
+      "description": "【人设】使用AstrBot自带人设",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "SUMMARY_MODEL",
+      "description": "【总结模型】独立 API 模型名",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "GENERATION_MODEL",
+      "description": "【生成模型】独立 API 模型名",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "COMMENT_CONTEXT_MAX_CALLS",
+      "description": "【回复】每条评论最多查询次数",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "ENABLE_BILI_SHARE_PARSE",
+      "description": "【分享解析·总开关】识别群聊和私聊里的B站视频分享",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "BILI_SHARE_PARSE_AUTO_TRIGGER_ENABLED",
+      "description": "【分享解析·触发】自动识别聊天中的B站视频",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "BILI_SHARE_PARSE_MANUAL_TRIGGER_ENABLED",
+      "description": "【分享解析·触发】允许 /bili解析 手动触发",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "BILI_SHARE_PARSE_LLM_TRIGGER_ENABLED",
+      "description": "【分享解析·触发】允许 LLM 工具触发",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "BILI_SHARE_PENDING_MAX_AGE",
+      "description": "【分享解析】上一个待解析视频保留秒数",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "BILI_SHARE_PARSE_SEND_VIDEO",
+      "description": "【分享解析】解析后发送原视频/切片",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "BILI_SHARE_PARSE_SEGMENT_SECONDS",
+      "description": "【分享解析】原视频切片秒数",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "BILI_SHARE_PARSE_MAX_SEGMENTS",
+      "description": "【分享解析】每次最多发送几个切片",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "BILI_SHARE_PARSE_MAX_VIDEO_MB",
+      "description": "【分享解析】单个视频文件大小阈值MB",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "BILI_SHARE_PARSE_VIDEO_MAX_HEIGHT",
+      "description": "【分享解析】原视频下载最高分辨率",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "BILI_SHARE_PARSE_COOLDOWN",
+      "description": "【分享解析】同一视频重复解析冷却秒数",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "ENABLE_AFFECTION",
+      "description": "【功能开关】启用好感度系统",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "AFFECTION_PROMPT_SPECIAL",
+      "description": "【好感度提示词】主人（固定100分）",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "AFFECTION_PROMPT_CLOSE",
+      "description": "【好感度提示词】亲密（80-99分）",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "AFFECTION_PROMPT_FRIEND",
+      "description": "【好感度提示词】熟悉（50-79分）",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "AFFECTION_PROMPT_NORMAL",
+      "description": "【好感度提示词】普通（10-49分）",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "AFFECTION_PROMPT_STRANGER",
+      "description": "【好感度提示词】陌生（0-9分）",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "AFFECTION_PROMPT_COLD",
+      "description": "【好感度提示词】冷淡（负分）",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "PROACTIVE_COMMENT_COUNT",
+      "description": "【主动看片·数量】每个视频最多主动评论几条",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "SPECIAL_FOLLOW_MODE",
+      "description": "【特别关注】触发模式",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "SPECIAL_FOLLOW_TIMES_COUNT",
+      "description": "【特别关注】每天巡视几次（random模式生效）",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "SPECIAL_FOLLOW_FIXED_TIMES",
+      "description": "【特别关注】固定触发时间（fixed模式生效）",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "ENABLE_PERSONALITY_EVOLUTION",
+      "description": "【实验性】启用每周近期状态演化",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "EVOLVE_MIN_DATA_DAYS",
+      "description": "【性格演化】启用前最少真实日报天数",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "EVOLVE_WEEKDAY",
+      "description": "【性格演化】每周执行日",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "EVOLVE_HOUR",
+      "description": "【性格演化】每周触发时刻（0-23点）",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "EVOLVE_MAX_RETRIES",
+      "description": "【兼容字段】旧版演化重试次数（不再使用）",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "EVOLVE_PROMPT",
+      "description": "【性格演化】每周整理补充提示词",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "ENABLE_MEME_LEARNING",
+      "description": "【实验性】允许每周学习少量近期梗",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "AUTONOMOUS_PLAN_PROMPT",
+      "description": "【自主安排】每日计划补充提示词",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "AUTONOMOUS_PLAN_GENERATION_MODE",
+      "description": "【自主安排】每日计划生成时机",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "AUTONOMOUS_PLAN_AFTER_SLEEP_MINUTES",
+      "description": "【自主安排】休眠结束后多少分钟生成计划",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "AUTONOMOUS_PLAN_GENERATION_TIME",
+      "description": "【自主安排】每日计划固定生成时刻",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "AUTONOMOUS_PLAN_RETRY_MINUTES",
+      "description": "【自主安排】计划生成失败后的重试等待（分钟）",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "AUTONOMOUS_PLAN_MAX_RETRIES",
+      "description": "【自主安排】计划生成失败后自动重试次数",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "AUTONOMOUS_PROACTIVE_WINDOW_MINUTES",
+      "description": "【自主安排】主动浏览默认时间段长度（分钟）",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "AUTONOMOUS_REPLY_DAILY_MIN",
+      "description": "【兼容旧配置】每日评论回复旧版下限（已停用）",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "AUTONOMOUS_PRIVATE_DAILY_MIN",
+      "description": "【兼容旧配置】每日私信回复旧版下限（已停用）",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "AUTONOMOUS_DYNAMIC_DAILY_MIN",
+      "description": "【兼容旧配置】每日发布动态旧版下限（已停用）",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "AUTONOMOUS_PROACTIVE_DAILY_MIN",
+      "description": "【兼容旧配置】每日主动浏览旧版下限（已停用）",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "AUTONOMOUS_PROACTIVE_DAILY_MAX",
+      "description": "【自主安排·上限】每日主动浏览轮次最多几轮",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "AUTONOMOUS_MIN_ACTION_GAP_MINUTES",
+      "description": "【自主安排·硬约束】主动事件最小间隔（分钟）",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "FIXED_REPLY_DAILY_TARGET",
+      "description": "【兼容旧配置】每日评论回复旧版目标（已停用）",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "FIXED_PRIVATE_DAILY_TARGET",
+      "description": "【兼容旧配置】每日私信回复旧版目标（已停用）",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "FIXED_PROACTIVE_TIMES",
+      "description": "【固定计划】主动浏览准确时刻",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "FIXED_DYNAMIC_TIMES",
+      "description": "【固定计划】发布动态准确时刻",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "FIXED_DYNAMIC_WATCH_TIMES",
+      "description": "【固定计划】关注动态巡视准确时刻",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "FIXED_BANGUMI_TIMES",
+      "description": "【固定计划】追番准确时刻",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "FIXED_SPECIAL_FOLLOW_TIMES",
+      "description": "【固定计划】特别关注巡视准确时刻",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "AUTONOMOUS_REPLY_DAILY_LIMIT",
+      "description": "【兼容旧配置】每日评论回复旧版单值上限（请改用新上限）",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "AUTONOMOUS_PRIVATE_DAILY_LIMIT",
+      "description": "【兼容旧配置】每日私信回复旧版单值上限（请改用新上限）",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "AUTONOMOUS_DYNAMIC_DAILY_LIMIT",
+      "description": "【兼容旧配置】每日发布动态旧版单值上限（请改用新上限）",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "AUTONOMOUS_PROACTIVE_DAILY_LIMIT",
+      "description": "【兼容旧配置】每日主动行为旧版单值上限（请改用新上限）",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "BEHAVIOR_BUDGET_ENABLED",
+      "description": "【行为调度·总开关】统一限制主动看片、评论、私信、直播和动态动作",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "BEHAVIOR_ACTION_TIMEOUT_SECONDS",
+      "description": "【行为调度·队列】单个发送动作超时秒数",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "ENABLE_PRIVACY_REDACTION",
+      "description": "【记忆隔离】跨平台输出前执行隐私脱敏",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "IMAGE_GEN_BACKEND",
+      "description": "【高级·图片生成】生图后端",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "IMAGE_GEN_MODEL",
+      "description": "【高级·图片生成】模型名称",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "IMAGE_GEN_WIDTH",
+      "description": "【高级·图片生成】NovelAI 图片宽度",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "IMAGE_GEN_HEIGHT",
+      "description": "【高级·图片生成】NovelAI 图片高度",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "IMAGE_GEN_STEPS",
+      "description": "【高级·图片生成】NovelAI 采样步数",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "IMAGE_GEN_SCALE",
+      "description": "【高级·图片生成】NovelAI 提示词引导强度",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "IMAGE_GEN_SAMPLER",
+      "description": "【高级·图片生成】NovelAI 采样器",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "IMAGE_GEN_NEGATIVE_PROMPT",
+      "description": "【高级·图片生成】NovelAI 负面提示词",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "ENABLE_WEB_SEARCH",
+      "description": "【高级·联网搜索】启用联网搜索",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "WEB_SEARCH_JUDGE_PROVIDER_ID",
+      "description": "【高级·联网搜索】搜索判断模型（建议选轻量模型）",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "WEB_SEARCH_BACKEND",
+      "description": "【高级·联网搜索】搜索后端",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "WEB_SEARCH_MODEL",
+      "description": "【高级·联网搜索】搜索模型名（Grok / custom / perplexity）",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    },
+    {
+      "key": "WEB_SEARCH_MAX_RESULTS",
+      "description": "【高级·联网搜索】搜索返回最大条数",
+      "reason": "由统一人格、日程、模型、现有扩展替代，或属于废弃/低收益配置，不在新插件重复实现。"
+    }
+  ],
+  "migrated": [
+    "COOKIE_AUTO_REFRESH",
+    "COOKIE_CHECK_INTERVAL",
+    "LLM_CIRCUIT_FAILURE_THRESHOLD",
+    "LLM_CIRCUIT_COOLDOWN_SECONDS",
+    "PRIVATE_MESSAGE_POLL_INTERVAL",
+    "PRIVATE_MESSAGE_IDLE_POLL_INTERVAL",
+    "PRIVATE_MESSAGE_ACTIVE_WINDOW",
+    "PRIVATE_MESSAGE_AUTO_WATCH_VIDEO",
+    "PRIVATE_MESSAGE_BILI_SEARCH_ENABLED",
+    "PRIVATE_MESSAGE_BILI_SEARCH_LIMIT",
+    "BILI_PRIVATE_SHARE_TOOL_ENABLED",
+    "BILI_PRIVATE_SHARE_COOLDOWN",
+    "VIDEO_SEGMENT_MINUTES",
+    "VIDEO_SEGMENT_MAX_COUNT",
+    "ENABLE_PROACTIVE_LLM_PREFILTER",
+    "PROACTIVE_LLM_PREFILTER_MAX_REJECTS",
+    "PROACTIVE_SEARCH_QUERY_PROMPT",
+    "PROACTIVE_TASTE_WINDOW_DAYS",
+    "ENABLE_DYNAMIC_WATCH",
+    "DYNAMIC_WATCH_TIMES_COUNT",
+    "DYNAMIC_WATCH_DAILY_LIMIT",
+    "DYNAMIC_WATCH_SPECIAL_ONLY",
+    "DYNAMIC_WATCH_INCLUDE_VIDEO_POSTS"
+  ],
+  "review_keys": [
+    "PRIVATE_MESSAGE_AUTO_BLOCK",
+    "PRIVATE_MESSAGE_BLOCK_WHITELIST_UIDS",
+    "PRIVATE_MESSAGE_TRUSTED_DOMAINS",
+    "ENABLE_AUTO_BLOCK",
+    "BLOCK_WHITELIST_UIDS",
+    "AUTO_BLOCK_SCORE",
+    "AUTO_BLOCK_NEGATIVE_TIMES",
+    "ABUSE_ALERT_MODE",
+    "ABUSE_ALERT_QQ_UMO",
+    "ABUSE_ALERT_SCORE_THRESHOLD",
+    "ENABLE_LIVE_DANMAKU_REPLY",
+    "LIVE_DANMAKU_ROOM_ID",
+    "LIVE_DANMAKU_POLL_INTERVAL",
+    "LIVE_DANMAKU_REPLY_COOLDOWN",
+    "LIVE_DANMAKU_MAX_PER_MINUTE",
+    "LIVE_DANMAKU_REPLY_MAX_LENGTH",
+    "CUSTOM_LIVE_DANMAKU_INSTRUCTION",
+    "ENABLE_BANGUMI",
+    "BANGUMI_PROACTIVE",
+    "BANGUMI_POOLS",
+    "BANGUMI_EPISODE_COUNT",
+    "BANGUMI_CONTINUE_SCORE",
+    "BANGUMI_DAILY_LIMIT",
+    "BANGUMI_COMMENT",
+    "BANGUMI_AUTO_FOLLOW",
+    "ENABLE_DAILY_SUMMARY",
+    "DAILY_SUMMARY_HOUR",
+    "DAILY_SUMMARY_MODE",
+    "DAILY_SUMMARY_QQ_UMO",
+    "DAILY_SUMMARY_RENDER_IMAGE",
+    "CUSTOM_DAILY_INSTRUCTION",
+    "ENABLE_WEEKLY_SUMMARY",
+    "WEEKLY_SUMMARY_MODE",
+    "WEEKLY_SUMMARY_DAY",
+    "WEEKLY_SUMMARY_QQ_UMO",
+    "WEEKLY_SUMMARY_RENDER_IMAGE",
+    "SUMMARY_CJK_FONT_PATH",
+    "CUSTOM_WEEKLY_INSTRUCTION",
+    "VIDEO_VISION_MODEL",
+    "VIDEO_VISION_FORMAT",
+    "VIDEO_VISION_FPS",
+    "ENABLE_MOOD",
+    "ENABLE_CROSS_PLATFORM_ACTIVITY_STATUS",
+    "DYNAMIC_TIMES_COUNT",
+    "DYNAMIC_DAILY_COUNT",
+    "DYNAMIC_MIN_INTERVAL_DAYS",
+    "DYNAMIC_TOPICS",
+    "CUSTOM_DYNAMIC_INSTRUCTION",
+    "ENABLE_LLM_TOOLS",
+    "BILI_ALLOW_SEARCH_TOOLS",
+    "BILI_TOOL_ALLOWLIST",
+    "IMAGE_VISION_PROVIDER_ID",
+    "IMAGE_VISION_MODEL",
+    "DYNAMIC_WATCH_INTEREST_PROMPT"
+  ]
+}

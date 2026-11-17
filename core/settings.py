@@ -5,12 +5,12 @@ import re
 from .configuration import number
 from .planning import allowed_intervals
 
-DEFAULTS={'platform_weights':{},'provider_id':'','model_ids':{},'public_persona':'','timezone':'Asia/Shanghai','windows':['10:00-11:00','20:00-21:00'],
+DEFAULTS={'model_circuit_threshold':3,'model_circuit_cooldown':300,'platform_weights':{},'provider_id':'','model_ids':{},'public_persona':'','timezone':'Asia/Shanghai','windows':['10:00-11:00','20:00-21:00'],
  'rest_windows':[],'daily_rounds':2,'session_minutes':30,'daily_limit':20,'minute_limit':2,'share_min_score':8,'comment_min_score':8,
  'control_umos':[],'memory_enabled':False,'preference_half_life_days':14,'exploration_ratio':.15,
  'evaluation_rubric':'优先有具体内容、新意和可靠来源的作品，不因标题夸张或热度就给高分。','activity_level':55,
  'vision_policy':'when_text_insufficient','vision_frame_count':5,'vision_max_mb':96}
-PHASES={'daily_plan','evaluation','platform_reply','video_frames','owner_share','public_comment','attribution_review','diagnostic'}
+PHASES={'daily_plan','evaluation','platform_reply','video_frames','owner_share','public_comment','attribution_review','diagnostic','private_research','interest_search','candidate_selection','dynamic_images','video_direct','browse_mood','activity_summary','autonomous_dynamic','abuse_assessment','abuse_confirmation','private_image'}
 
 def public_settings(config):return {key:config.get(key,value) for key,value in DEFAULTS.items()}
 
@@ -28,7 +28,7 @@ def validate_settings(values,previous,providers=None):
   if not re.fullmatch(r'[^:]+:FriendMessage:\d+',route):raise ValueError('private_control_route_required')
  try:allowed_intervals(datetime.now(zone).date(),combined['windows'],combined['rest_windows'],combined['timezone'])
  except (ValueError,TypeError):raise ValueError('invalid_global_windows') from None
- for key,low,high,integer in [('daily_rounds',0,12,True),('session_minutes',1,180,True),('daily_limit',0,100000,True),('minute_limit',0,1000,True),
+ for key,low,high,integer in [('model_circuit_threshold',1,20,True),('model_circuit_cooldown',30,3600,True),('daily_rounds',0,12,True),('session_minutes',1,180,True),('daily_limit',0,100000,True),('minute_limit',0,1000,True),
   ('activity_level',0,100,True),('share_min_score',1,10,False),('comment_min_score',1,10,False),
   ('preference_half_life_days',.1,365,False),('exploration_ratio',0,1,False),('vision_frame_count',1,12,True),('vision_max_mb',8,256,True)]:
   if key in values:

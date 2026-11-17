@@ -3,7 +3,7 @@ import math
 import re
 from ..providers.xhh_client.security import SENSITIVE_KEY_RE
 
-CAPABILITIES = {'browse', 'search', 'reply', 'private_reply', 'comment', 'dynamic', 'owner_share', 'listen'}
+CAPABILITIES = {'browse', 'search', 'reply', 'private_reply', 'comment', 'dynamic', 'owner_share', 'listen','block_user'}
 TYPES = {'string', 'int', 'float', 'bool', 'list'}
 
 

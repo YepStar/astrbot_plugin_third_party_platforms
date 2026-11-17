@@ -44,8 +44,9 @@
   },
   "share_min_score": {
     "type": "float",
-    "description": "所有平台共用最低分享评分",
-    "default": 8.0
+    "description": "分享评分全局兜底",
+    "default": 8.0,
+    "hint": "仅在平台账号的对应评分为空或无法读取时使用；账号有效配置始终优先。"
   },
   "control_umos": {
     "type": "list",
@@ -77,8 +78,9 @@
   },
   "comment_min_score": {
     "type": "float",
-    "description": "所有平台共用的最低主动评论评分",
-    "default": 8
+    "description": "评论评分全局兜底",
+    "default": 8,
+    "hint": "仅在平台账号的对应评分为空或无法读取时使用；账号有效配置始终优先。"
   },
   "preference_half_life_days": {
     "type": "float",
@@ -134,5 +136,15 @@
     "type": "int",
     "description": "每轮参考时长（分钟，1–180）；一个允许时间窗内可安排多轮，边界处可缩短",
     "default": 30
+  },
+  "model_circuit_threshold": {
+    "type": "int",
+    "description": "模型连续失败几次后暂缓调用",
+    "default": 3
+  },
+  "model_circuit_cooldown": {
+    "type": "int",
+    "description": "模型故障冷却秒数",
+    "default": 300
   }
 }

@@ -8,3 +8,27 @@
 - Give delegated music sessions a bounded one-hour execution budget, covering real-time audio and model work; keep the normal 45-second timeout for network actions.
 - Propagate music execution receipts to scheduled tasks so failed/unknown operations are not marked successful.
 - Preserve invitation permissions, rating policy, idempotency and historical playback records.
+
+## 0.3.0
+
+- 补齐B站登录维护、私信视频/只读查询、候选预筛选与模型故障冷却。
+- 加入近期公开观看兴趣搜索、统一浏览轮次中的关注动态图文和长视频分段采样。
+- 增加按需实际活动回顾；站内分享复用现有评分、额度和幂等流程。
+- 原版设置对照更新23项接入映射，移除74项不再迁移配置，54项保留待判断并分组说明。
+- 保留原账号、权限、预算和历史数据；关闭的旧功能保持关闭，新增通知默认关闭。
+
+## 0.3.1
+
+- 待判断配置可选择接入或不接入，按组批量选择，400毫秒防抖自动保存，可随时修改或恢复未选择。
+- 显示已选、接入、不接入进度，全部完成时明确提示；选择存于本机数据库，后续可直接读取。
+- 选择只表达迁移决定，不启用功能、不改变账号权限、不执行迁移；版本冲突时拒绝覆盖另一页面的选择。
+
+## 0.4.0
+
+- QQ 私聊分享与摘要卡片在成功发送后写入当前会话历史，便于承接用户对分享内容的回复；存档失败不重复发送。
+
+- 按本机保存的39项接入、15项不接入完成第二轮迁移；移除直播、番剧及单独动态兴趣提示词对照。
+- 临时浏览情绪、实际活动同步、基于真实经历的自主文字动态、日报周报生成/归档/投递与中文图片卡片。
+- 受控B站查询/互动工具、私信只读白名单、视频直读/可确认音频与私信图片理解。模型不兼容时明确降级，不声称已理解音频。
+- 恶意消息隔离、证据累计、保护名单、告警二次确认与拉黑动作防重复。既有关闭的自动功能不因迁移开启。
+- 不再依赖旧BiliBot或旧小黑盒适配器的运行实例；历史配置、数据与备份保留。

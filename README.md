@@ -44,3 +44,7 @@
 由 **YepStar** 维护。可搭配[并行记忆分支](https://github.com/YepStar/astrbot_plugin_memory_branches)、[网易云音乐](https://github.com/YepStar/astrbot_plugin_netease_browser)和[自然意图分析](https://github.com/YepStar/astrbot_plugin_intent_bridge)。自然意图分析把“今晚看看B站”“把小黑盒浏览挪到九点”等日常表达，转换成已授权的功能调用。
 
 日程、平台配置、分区选择与存储说明：[配置与原版对照](docs/CONFIGURATION.md)。
+
+## B站生活与互动
+
+支持临时浏览情绪、陪伴活动状态、自主文字动态、日报周报与中文卡片。新增能力在“生活与总结”“安全与工具”“视频分析”中配置，沿用账号权限、额度和发送防重。视频直读及音频需要所选模型实际支持，失败时明确回退抽帧；私信图片与查询工具分别控制。原版设置对照可查看迁移后的配置入口。

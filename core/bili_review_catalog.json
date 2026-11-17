@@ -1,0 +1,218 @@
+{
+  "PRIVATE_MESSAGE_AUTO_BLOCK": {
+    "description": "【B站私信·安全】危险私信自动拉黑",
+    "category": "拉黑与恶意消息告警"
+  },
+  "PRIVATE_MESSAGE_BLOCK_WHITELIST_UIDS": {
+    "description": "【B站私信·安全】永不因私信自动拉黑的UID",
+    "category": "拉黑与恶意消息告警"
+  },
+  "PRIVATE_MESSAGE_TRUSTED_DOMAINS": {
+    "description": "【B站私信·安全】允许出现的链接域名",
+    "category": "拉黑与恶意消息告警"
+  },
+  "ENABLE_LIVE_DANMAKU_REPLY": {
+    "description": "【直播互动·总开关】进入指定直播间参与弹幕互动",
+    "category": "直播弹幕"
+  },
+  "LIVE_DANMAKU_ROOM_ID": {
+    "description": "【直播互动】参与互动的B站直播间号",
+    "category": "直播弹幕"
+  },
+  "LIVE_DANMAKU_POLL_INTERVAL": {
+    "description": "【直播互动】检查新弹幕间隔（秒）",
+    "category": "直播弹幕"
+  },
+  "LIVE_DANMAKU_REPLY_COOLDOWN": {
+    "description": "【直播互动】两次发送弹幕最短间隔（秒）",
+    "category": "直播弹幕"
+  },
+  "LIVE_DANMAKU_MAX_PER_MINUTE": {
+    "description": "【直播互动】每分钟最多发送弹幕次数",
+    "category": "直播弹幕"
+  },
+  "LIVE_DANMAKU_REPLY_MAX_LENGTH": {
+    "description": "【直播互动】单次回应最大总字数",
+    "category": "直播弹幕"
+  },
+  "CUSTOM_LIVE_DANMAKU_INSTRUCTION": {
+    "description": "【直播互动】弹幕互动补充提示词",
+    "category": "直播弹幕"
+  },
+  "ENABLE_MOOD": {
+    "description": "【功能开关】启用心情系统",
+    "category": "近期浏览情绪"
+  },
+  "ENABLE_CROSS_PLATFORM_ACTIVITY_STATUS": {
+    "description": "【跨端活动与分享】向已绑定主人同步当前活动",
+    "category": "跨端活动状态"
+  },
+  "ENABLE_BANGUMI": {
+    "description": "【番剧】启用番剧功能（看番、搜番、番剧记忆）",
+    "category": "番剧追更"
+  },
+  "BANGUMI_PROACTIVE": {
+    "description": "【番剧】启用主动看番（定时自动随机看番）",
+    "category": "番剧追更"
+  },
+  "BANGUMI_POOLS": {
+    "description": "【番剧】番剧来源池",
+    "category": "番剧追更"
+  },
+  "BANGUMI_EPISODE_COUNT": {
+    "description": "【番剧】每次看番最多追更几集",
+    "category": "番剧追更"
+  },
+  "BANGUMI_CONTINUE_SCORE": {
+    "description": "【番剧】追更阈值（评分≥此值才继续看下一集）",
+    "category": "番剧追更"
+  },
+  "BANGUMI_DAILY_LIMIT": {
+    "description": "【番剧】每天主动看番的次数上限",
+    "category": "番剧追更"
+  },
+  "BANGUMI_COMMENT": {
+    "description": "【番剧】看番时评论（≥6分）",
+    "category": "番剧追更"
+  },
+  "BANGUMI_AUTO_FOLLOW": {
+    "description": "【番剧】评分≥7时自动追番",
+    "category": "番剧追更"
+  },
+  "DYNAMIC_WATCH_INTEREST_PROMPT": {
+    "description": "【关注动态巡视】兴趣判断补充提示词",
+    "category": "关注动态专用表达"
+  },
+  "DYNAMIC_TIMES_COUNT": {
+    "description": "【动态发布】每天触发几次动态发布",
+    "category": "自主发布动态"
+  },
+  "DYNAMIC_DAILY_COUNT": {
+    "description": "【动态发布】每天最多发几条动态",
+    "category": "自主发布动态"
+  },
+  "DYNAMIC_MIN_INTERVAL_DAYS": {
+    "description": "【动态】自动动态最短间隔（天）",
+    "category": "自主发布动态"
+  },
+  "DYNAMIC_TOPICS": {
+    "description": "【动态发布】动态主题池（每行一个）",
+    "category": "自主发布动态"
+  },
+  "CUSTOM_DYNAMIC_INSTRUCTION": {
+    "description": "【动态发布】发动态的补充提示词",
+    "category": "自主发布动态"
+  },
+  "ENABLE_DAILY_SUMMARY": {
+    "description": "【总结·日总结】启用每日总结",
+    "category": "回顾的自动投递与图片"
+  },
+  "DAILY_SUMMARY_HOUR": {
+    "description": "【总结·日总结】生成时间（0-23点）",
+    "category": "回顾的自动投递与图片"
+  },
+  "DAILY_SUMMARY_MODE": {
+    "description": "【总结·日总结】投递方式",
+    "category": "回顾的自动投递与图片"
+  },
+  "DAILY_SUMMARY_QQ_UMO": {
+    "description": "【总结·日总结】QQ投递目标 UMO",
+    "category": "回顾的自动投递与图片"
+  },
+  "DAILY_SUMMARY_RENDER_IMAGE": {
+    "description": "【总结·日总结】渲染为图片",
+    "category": "回顾的自动投递与图片"
+  },
+  "CUSTOM_DAILY_INSTRUCTION": {
+    "description": "【总结·日总结】补充提示词",
+    "category": "回顾的自动投递与图片"
+  },
+  "ENABLE_WEEKLY_SUMMARY": {
+    "description": "【周总结】启用每周总结（回顾一周的B站生活）",
+    "category": "回顾的自动投递与图片"
+  },
+  "WEEKLY_SUMMARY_MODE": {
+    "description": "【周总结】总结发送方式",
+    "category": "回顾的自动投递与图片"
+  },
+  "WEEKLY_SUMMARY_DAY": {
+    "description": "【周总结】每周生成日（0=周一 ... 6=周日）",
+    "category": "回顾的自动投递与图片"
+  },
+  "WEEKLY_SUMMARY_QQ_UMO": {
+    "description": "【周总结】接收总结的 QQ 私聊 UMO（留空则复用恶意告警的 UMO）",
+    "category": "回顾的自动投递与图片"
+  },
+  "WEEKLY_SUMMARY_RENDER_IMAGE": {
+    "description": "【周总结】生成周总结图片卡片",
+    "category": "回顾的自动投递与图片"
+  },
+  "SUMMARY_CJK_FONT_PATH": {
+    "description": "【总结·图片渲染】自定义中文字体路径（可选）",
+    "category": "回顾的自动投递与图片"
+  },
+  "CUSTOM_WEEKLY_INSTRUCTION": {
+    "description": "【周总结】周总结的补充提示词",
+    "category": "回顾的自动投递与图片"
+  },
+  "ENABLE_LLM_TOOLS": {
+    "description": "【功能开关】启用 LLM 工具（B站查询/看视频/搜索等函数调用）",
+    "category": "其他B站专用工具"
+  },
+  "BILI_ALLOW_SEARCH_TOOLS": {
+    "description": "【安全与工具】允许 B站端私信回复使用只读查询工具",
+    "category": "其他B站专用工具"
+  },
+  "BILI_TOOL_ALLOWLIST": {
+    "description": "【安全与工具】B站端私信回复工具白名单",
+    "category": "其他B站专用工具"
+  },
+  "ABUSE_ALERT_MODE": {
+    "description": "【恶意告警】检测到恶意评论时通知主人（通过QQ私信）",
+    "category": "拉黑与恶意消息告警"
+  },
+  "ABUSE_ALERT_QQ_UMO": {
+    "description": "【恶意告警】接收通知的 QQ 私聊 UMO（从 AstrBot 日志或读空气插件的 UMO 注册表获取）",
+    "category": "拉黑与恶意消息告警"
+  },
+  "ABUSE_ALERT_SCORE_THRESHOLD": {
+    "description": "【恶意告警】触发告警的 score_delta 阈值",
+    "category": "拉黑与恶意消息告警"
+  },
+  "ENABLE_AUTO_BLOCK": {
+    "description": "【拉黑】启用自动拉黑",
+    "category": "拉黑与恶意消息告警"
+  },
+  "BLOCK_WHITELIST_UIDS": {
+    "description": "【拉黑】永不拉黑的UID白名单",
+    "category": "拉黑与恶意消息告警"
+  },
+  "AUTO_BLOCK_SCORE": {
+    "description": "【拉黑】好感度低于此值自动拉黑",
+    "category": "拉黑与恶意消息告警"
+  },
+  "AUTO_BLOCK_NEGATIVE_TIMES": {
+    "description": "【拉黑】恶意评论累计次数达标自动拉黑",
+    "category": "拉黑与恶意消息告警"
+  },
+  "VIDEO_VISION_MODEL": {
+    "description": "【高级·视觉】视频分析模型名称",
+    "category": "视频直读与音频理解"
+  },
+  "VIDEO_VISION_FORMAT": {
+    "description": "【高级·视觉】视频直读的接口格式（请根据你使用的模型选择）",
+    "category": "视频直读与音频理解"
+  },
+  "VIDEO_VISION_FPS": {
+    "description": "【高级·视觉】视频直读抽帧率（仅Qwen格式生效）",
+    "category": "视频直读与音频理解"
+  },
+  "IMAGE_VISION_PROVIDER_ID": {
+    "description": "【高级·视觉】图片识别使用的 AstrBot 模型提供商",
+    "category": "私信图片理解"
+  },
+  "IMAGE_VISION_MODEL": {
+    "description": "【高级·视觉】图片识别模型名称",
+    "category": "私信图片理解"
+  }
+}

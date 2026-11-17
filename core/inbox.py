@@ -53,6 +53,8 @@ class Inbox:
     async def poll(self,provider,account):
         cfg=self.executor.policy.account(provider,account);now=self.clock();key=(provider,account)
         interval=max(60,int(cfg.get('reply',{}).get('poll_seconds',180)))
+        if provider=='bilibili' and cfg.get('actions',{}).get('private_reply'):
+            interval=min(interval,max(30,int(cfg.get('reply',{}).get('private_poll_seconds',60))))
         if now<self.poll_after.get(key,0):return
         self.poll_after[key]=now+interval # Reserve before HTTP, also on failure.
         adapter=self.registry.get(provider)
@@ -77,6 +79,9 @@ class Inbox:
             async with lock:
                 if not self.store.claim_event(event.key):continue
                 try:
+                    moderation=getattr(self,'moderation',None)
+                    if moderation and await moderation.assess(event,cfg):
+                        self.store.finish_event(event.key,'ignored','abuse_isolated');continue
                     adapter=self.registry.get(event.provider)
                     source=await adapter.reply_context(event) if cfg.get('reply',{}).get('context_enabled',True) and hasattr(adapter,'reply_context') else {'text':event.source_text,'images':[]}
                     raw=await self.generate('platform_reply',{

@@ -71,10 +71,11 @@ def test_evidence_preference_is_persistent_not_plan_learning(tmp_path):
 def config():return {'enabled':True,'daily_limit':10,'minute_limit':5,'share_min_score':8,
     'platforms':{'p':{'enabled':True,'accounts':{'a':{'enabled':True,'owner_umo':'qq_bot:FriendMessage:1','actions':{'owner_share':True},'daily_limits':{'owner_share':2}}}}}}
 
-def test_global_threshold_cannot_be_lowered():
+def test_account_threshold_overrides_global_fallback():
     cfg=config();cfg['platforms']['p']['accounts']['a']['share_min_score']=3
     policy=Policy(cfg)
-    with pytest.raises(PermissionError):policy.permit('p','a','owner_share',models.Evaluation(7,'r','e',True))
+    assert policy.permit('p','a','owner_share',models.Evaluation(7,'r','e',True))
+    with pytest.raises(PermissionError):policy.permit('p','a','owner_share',models.Evaluation(2,'r','e',True))
     assert policy.permit('p','a','owner_share',models.Evaluation(9,'r','e',True))
     with pytest.raises(PermissionError):policy.permit('p','a','comment')
 

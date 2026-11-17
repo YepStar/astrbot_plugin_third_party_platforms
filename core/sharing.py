@@ -43,6 +43,8 @@ async def share(service, content, evaluation, text, item):
     last=service.store.setting(cooldown_key,0)
     if last and service.clock()-last<int(item.get('share_gap_seconds',0)):return
     selected = routes(content.provider, item)
+    if content.metadata.get('kind')=='dynamic':
+        selected=[(kind,recipient) for kind,recipient in selected if kind!='comment']
     if not selected:
         return
     keys = [delivery_key(content.provider, content.external_id, kind, recipient) for kind, recipient in selected]

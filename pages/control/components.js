@@ -38,4 +38,48 @@ export async function renderStorage(container,pid,{action,notify}){
  const metrics=e('div','metrics');for(const [title,value]of [['共用数据库',(data.database_bytes/1048576).toFixed(2)+' MB'],['日程',data.counts.tasks],['执行回执',data.counts.actions],['收件事件',data.counts.inbox]]){const c=e('div','metric');c.append(e('span','',title),e('strong','',String(value)));metrics.append(c);}panel.append(metrics,e('p','muted','保护保留：'+data.protected.join('、')));
  const label=e('label','field','已结束事件正文保留天数'),input=e('input');input.type='number';input.min=7;input.max=3650;input.value=data.retention_days;label.append(input);const result=e('p','muted');let preview=null;const run=btn('确认压缩到期正文',async()=>{if(!preview||preview.retention_days!==Number(input.value))throw Error('请先按当前保留天数预览清理范围');const r=await action({operation:'storage_cleanup',provider:pid,retention_days:Number(input.value),confirm:true});result.textContent='已压缩 '+r.pruned_bodies+' 条正文。'+r.note;run.disabled=true;notify('存储清理已完成');});run.hidden=true;input.oninput=()=>{preview=null;run.hidden=true;};panel.append(label,btn('预览清理范围',async()=>{preview=await action({operation:'storage_preview',provider:pid,retention_days:Number(input.value)});result.textContent='可压缩 '+preview.body_count+' 条正文。'+preview.note;run.hidden=false;}),result,run);container.append(panel);
 }
-export function renderBiliReference(container,rows){container.replaceChildren();const panel=e('section','panel');panel.append(e('h2','','BiliBot 原版设置对照'),e('p','muted','列出原版配置的迁移位置。尚未接入的功能仍保留在旧插件中，不会把未生效的开关伪装为可用。独立记忆、向量接口和凭据不在这里重复配置。'));const search=e('input');search.placeholder='搜索原版设置或功能';search.setAttribute('aria-label','搜索原版设置');const list=e('div');const draw=()=>{list.replaceChildren();for(const row of rows){if(search.value&&!`${row.key} ${row.description}`.toLowerCase().includes(search.value.toLowerCase()))continue;const item=e('div','reference-row'),status=row.status==='ported'?'已接入':row.status==='shared'?'统一管理':'尚未接入';item.append(e('strong','',row.description),e('small','muted',row.key),e('span','badge '+(row.status==='pending'?'warn':'good'),status),e('p','muted',row.target||'保留对比；此项没有按“已被其他插件替代”删去。'));list.append(item);}};search.oninput=draw;draw();panel.append(search,list);container.append(panel);}
+let biliDecisionDraft;
+function decisionDraft(review,save){
+ const incoming=review||{revision:0,choices:{}};
+ if(!biliDecisionDraft)biliDecisionDraft={revision:incoming.revision,choices:{...incoming.choices},dirty:false,saving:false,error:'',listeners:new Set(),timer:null};
+ const draft=biliDecisionDraft;
+ if(!draft.dirty&&!draft.saving&&incoming.revision>draft.revision){draft.revision=incoming.revision;draft.choices={...incoming.choices};}
+ draft.save=save;return draft;
+}
+function decisionNotice(draft){for(const listener of draft.listeners){if(listener.alive())listener.update();else draft.listeners.delete(listener);}}
+async function saveDecisions(draft){
+ clearTimeout(draft.timer);if(draft.saving||!draft.dirty||!draft.save)return;
+ draft.saving=true;draft.error='';decisionNotice(draft);
+ try{while(draft.dirty){const choices={...draft.choices};draft.dirty=false;try{const result=await draft.save({revision:draft.revision,choices});draft.revision=result.revision;}catch(error){draft.dirty=true;draft.error=error.message||'保存未完成，请重试';break;}}}
+ finally{draft.saving=false;decisionNotice(draft);}
+}
+function choicesChanged(draft){draft.dirty=true;draft.error='';decisionNotice(draft);clearTimeout(draft.timer);draft.timer=setTimeout(()=>saveDecisions(draft),400);}
+export function renderBiliReference(container,rows,{review,save}={}){
+ container.replaceChildren();const panel=e('section','panel'),draft=decisionDraft(review,save);
+ panel.append(e('h2','','迁移状态与待判断功能'),e('p','muted','选择接入或不接入，系统会自动保存。这里只记录后续迁移决定，不会立即启用功能；你选完后我可以读取并继续修改。'));
+ const pending=rows.filter(row=>row.status==='review');
+ const progress=e('p','notice'),saved=e('p','muted');saved.setAttribute('role','status');saved.setAttribute('aria-live','polite');
+ const saveButton=btn('立即保存选择',()=>saveDecisions(draft));
+ const listener={alive:()=>panel.isConnected,update:()=>{if(!pending.length){const savedChoices=Object.values(review?.choices||{});progress.textContent=`本轮迁移已完成：接入 ${savedChoices.filter(x=>x==='integrate').length} 项，不接入 ${savedChoices.filter(x=>x==='skip').length} 项。以下可查阅当前能力和配置入口。`;saved.textContent='你的选择记录已保留。';saveButton.hidden=true;return;}const selected=pending.filter(row=>draft.choices[row.key]);const yes=selected.filter(row=>draft.choices[row.key]==='integrate').length;progress.textContent=`已选择 ${selected.length} / ${pending.length} 项：接入 ${yes} 项，不接入 ${selected.length-yes} 项${selected.length===pending.length?' · 全部选择完成':''}。另有 ${rows.length-pending.length} 项已接入或统一管理。`;saved.textContent=draft.error?'保存失败：'+draft.error:draft.saving?'正在自动保存…':draft.dirty?'有选择尚未保存':'选择已保存，可继续修改。';saved.className=draft.error?'notice warn':'muted';saveButton.disabled=draft.saving||!draft.dirty;for(const control of panel.querySelectorAll('[data-decision-key]'))control.value=draft.choices[control.dataset.decisionKey]||'';}};
+ draft.listeners.add(listener);panel.append(progress,saved,saveButton);
+ const search=e('input');search.placeholder='搜索功能、原配置项或迁移位置';search.setAttribute('aria-label','搜索迁移对照');
+ const select=e('select');select.setAttribute('aria-label','筛选迁移状态');for(const [value,label]of [['review','需要你判断'],['all','全部保留项目'],['ported','已接入'],['shared','统一管理']]){const option=e('option','',label);option.value=value;select.append(option);}
+ const controls=e('div','button-row');controls.append(search,select);const list=e('div');
+ const draw=()=>{
+  list.replaceChildren();const filtered=rows.filter(row=>(select.value==='all'||row.status===select.value)&&(!search.value||`${row.key} ${row.description} ${row.target}`.toLowerCase().includes(search.value.toLowerCase())));const groups=new Map();
+  for(const row of filtered){const category=row.category||(row.status==='ported'?'已接入功能':'统一管理');if(!groups.has(category))groups.set(category,[]);groups.get(category).push(row);}
+  for(const [category,items]of groups){
+   const group=e('details','reference-group');group.open=select.value==='review'||Boolean(search.value);group.append(e('summary','',category+' · '+items.length+' 项'));
+   const reviewRows=items.filter(row=>row.status==='review');
+   if(reviewRows.length){const bulk=e('div','button-row reference-bulk');for(const [value,label]of [['integrate','本组全部接入'],['skip','本组全部不接入']])bulk.append(btn(label,()=>{for(const row of reviewRows)draft.choices[row.key]=value;choicesChanged(draft);}));group.append(bulk);}
+   for(const row of items){const item=e('div','reference-row');item.append(e('strong','',row.description),e('small','muted',row.key),e('span','badge '+(row.status==='review'?'warn':'good'),row.status==='review'?'待你判断':row.status==='ported'?'已接入':'统一管理'),e('p','muted',row.target));
+    if(row.status==='review'){
+     const label=e('label','reference-choice','后续迁移选择'),choice=e('select');choice.dataset.decisionKey=row.key;choice.setAttribute('aria-label',row.description+'迁移选择');
+     for(const [value,text]of [['','尚未选择'],['integrate','接入'],['skip','不接入']]){const option=e('option','',text);option.value=value;choice.append(option);}choice.value=draft.choices[row.key]||'';
+     choice.onchange=()=>{if(choice.value)draft.choices[row.key]=choice.value;else delete draft.choices[row.key];choicesChanged(draft);};label.append(choice);item.append(label);
+    }group.append(item);
+   }list.append(group);
+  }if(!filtered.length)list.append(e('p','muted','没有匹配项目。'));listener.update();
+ };
+ search.oninput=draw;select.onchange=draw;if(!pending.length)select.value='all';draw();panel.append(controls,list);container.append(panel);listener.update();
+}

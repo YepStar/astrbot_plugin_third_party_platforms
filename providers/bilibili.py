@@ -14,6 +14,7 @@ import hashlib
 from .bili_client.discovery import BiliDiscovery
 from .bili_client.media import FrameSource
 from ..core.media import describe_frames
+from .bili_supplement import BiliSupplement
 
 class CredentialsConfig(dict):
     def __init__(self,values,save):super().__init__(values);self.save=save
@@ -44,6 +45,18 @@ class Client(BilibiliAPIMixin):
                 raw=b''.join(chunks)
                 return json.loads(raw),response
     async def _http_get(self,url,**kwargs):return await self._request('GET',url,**kwargs)
+    async def _http_get_text(self,url,**kwargs):
+        parsed=urlsplit(url)
+        if parsed.scheme!='https' or parsed.hostname!='www.bilibili.com' or parsed.port not in (None,443) or parsed.username or parsed.password or not re.fullmatch(r'/correspond/1/[0-9a-f]+',parsed.path) or parsed.query or parsed.fragment:
+            raise ValueError('untrusted_refresh_endpoint')
+        async with plugin_http_session(self.config) as session:
+            async with session.get(url,headers=self._headers(),timeout=aiohttp.ClientTimeout(total=20),allow_redirects=False) as response:
+                if response.status!=200:raise RuntimeError('refresh_html_unavailable')
+                raw=bytearray()
+                async for chunk in response.content.iter_chunked(65536):
+                    raw.extend(chunk)
+                    if len(raw)>1_000_000:raise ValueError('refresh_html_limit')
+                return raw.decode('utf-8'),response
     async def _http_post(self,url,**kwargs):return await self._request('POST',url,**kwargs) # no write retries
 
 class PoolClient(BiliDiscovery):
@@ -51,9 +64,9 @@ class PoolClient(BiliDiscovery):
         self.config={'PROACTIVE_VIDEO_POOLS':pools}
         self._http_get=client._http_get
 
-class Bilibili:
+class Bilibili(BiliSupplement):
     id='bilibili'
-    capabilities=frozenset({'search','browse','comment','reply','dynamic','owner_share','private_reply','like','coin','favorite','follow'})
+    capabilities=frozenset({'block_user','search','browse','comment','reply','dynamic','owner_share','private_reply','like','coin','favorite','follow'})
     def __init__(self,secrets,options,*,generate=None,cache_root=None):
         self.secrets=secrets;self.options=options;self.clients={};self.qr={}
         self.generate=generate;self.cache_root=cache_root or secrets.root.parent/'media_tmp';self.last_visual={};self.visual_cache={}
@@ -87,11 +100,13 @@ class Bilibili:
             for cookie,target in mapping.items():
                 if cookie in response.cookies:client.config[target]=response.cookies[cookie].value
             if not client.config.get('SESSDATA'):raise ValueError('missing_login_credentials')
+            refresh=raw.get('data',{}).get('refresh_token','')
+            if isinstance(refresh,str) and refresh:client.config['REFRESH_TOKEN']=refresh
             client.config.save_config();self.qr.pop(account,None)
         return {'state':'success' if code==0 else str(code)}
     async def browse(self,account,options):
         client=self.client(account);limit=max(1,min(10,int(options.get('count',2))))
-        query=options.get('query','')
+        query=await self.interest_query(account,options)
         rows=[];follow=[]
         uids=options.get('follow_uids',[])
         if options.get('special_follow_enabled'):
@@ -115,37 +130,43 @@ class Bilibili:
             bv=str(row.get('bvid',''))
             if not bv or bv in seen or bv in skipped:continue
             seen.add(bv);candidates.append(row)
-            if len(candidates)>=limit:break
+            if len(candidates)>=min(20,limit+int(options.get('prefilter_max_rejects',4))):break
         results=[]
+        if options.get('dynamic_watch_enabled'):
+            budget=max(0,min(limit,int(options.get('dynamic_daily_limit',3))-int(options.get('_dynamic_used',0))))
+            if budget:
+                try:results=await self.read_dynamics(account,options,min(budget,limit))
+                except asyncio.CancelledError:raise
+                except Exception:pass
+        candidates=await self.prefilter(account,candidates,options,max(0,limit-len(results)))
         for row in candidates:
             bv=str(row.get('bvid',''))
             if not re.fullmatch(r'BV[0-9A-Za-z]{10}',bv):continue
-            raw,_=await client._http_get('https://api.bilibili.com/x/web-interface/view',params={'bvid':bv})
-            if raw.get('code')!=0:continue
-            info=raw['data'];text=await client._get_video_subtitles(bv,info.get('cid'))
-            visual=await self.visual(account,info,text)
-            mode='subtitle' if text else 'description';text=text or str(info.get('desc',''))
-            if visual:
-                text=text[:9000]+'\n'+visual['text'];mode='subtitle_and_sparse_frames' if mode=='subtitle' else 'sparse_frames'
-            results.append(Content(self.id,account,bv,f'https://www.bilibili.com/video/{bv}',str(info.get('title','')),text,
-                str(info.get('owner',{}).get('mid','')),mode,{'aid':info.get('aid')}))
+            results.append(await self.read_video(account,bv))
         return results
     async def visual(self,account,info,subtitles=''):
         account_config=self.options.get('platforms',{}).get(self.id,{}).get('accounts',{}).get(account,{})
         overrides=account_config.get('vision',{})
-        options={**self.options,**{k:v for k,v in overrides.items() if k in {'vision_frame_count','vision_max_mb'} and v}}
+        options={**self.options,**{k:v for k,v in overrides.items() if k in {'vision_frame_count','vision_max_mb','video_segment_minutes','video_segment_max_count','video_direct_format','video_direct_fps'} and v}}
         policy=overrides.get('account_vision_policy','inherit')
         if policy=='inherit':policy=options.get('vision_policy','when_text_insufficient')
         if policy not in {'off','when_text_insufficient','always'}:raise ValueError('invalid_vision_policy')
         if policy=='off' or (policy=='when_text_insufficient' and len(subtitles.strip())>=40):return None
         if self.generate is None:
             self.last_visual={'state':'unavailable','code':'vision_generator_unconfigured'};return None
-        bvid=info.get('bvid','');key=(account,bvid,str(account_config.get('models',{}).get('vision_model') or options.get('model_ids',{}).get('video_frames','')),options.get('vision_frame_count',5),options.get('vision_max_mb',96),policy)
+        bvid=info.get('bvid','');key=(account,bvid,str(account_config.get('models',{}).get('vision_model') or options.get('model_ids',{}).get('video_frames','')),options.get('vision_frame_count',5),options.get('vision_max_mb',96),options.get('video_segment_minutes',0),options.get('video_segment_max_count',3),policy)
         cached=self.visual_cache.get(key)
         if cached and cached[0]>time.time():return cached[1]
         try:
             async with asyncio.timeout(240):
                 source=FrameSource(self.cache_root,self.client(account).config,options)
+                if options.get('video_direct_format','none')!='none':
+                    try:
+                        result=await self.direct_video(account,bvid,source,options)
+                        self.last_visual={'state':'observed','external_id':bvid,'modality':result['modality']}
+                        return result
+                    except asyncio.CancelledError:raise
+                    except Exception as exc:self.last_visual={'state':'direct_unavailable_fallback_frames','code':type(exc).__name__}
                 async with source.capture(bvid) as frames:
                     async def scoped_generate(phase,data):return await self.generate(phase,{**data,'platform':self.id,'account':account})
                     result=await describe_frames(scoped_generate,frames,{'provider':self.id,'external_id':bvid,
@@ -173,6 +194,11 @@ class Bilibili:
 
     async def execute(self,account,action,params,key):
         client=self.client(account);csrf=client.config.get('BILI_JCT','')
+        if action=='block_user':
+            mid=str(params.get('mid',''))
+            if not mid.isdigit() or mid==str(client.config.get('DEDE_USER_ID','')) or not csrf:raise ValueError('invalid_block_target')
+            raw,_=await client._http_post('https://api.bilibili.com/x/relation/modify',data={'csrf':csrf,'fid':mid,'act':5,'re_src':11})
+            return Receipt('succeeded',mid) if raw.get('code')==0 else Receipt('failed',code='block_rejected')
         if action in {'like','coin','favorite','follow'}:
             identifier=str(params.get('mid' if action=='follow' else 'aid',''))
             if not identifier.isdigit() or not csrf:raise ValueError('invalid_interaction_target')
@@ -213,7 +239,12 @@ class Bilibili:
         client=self.client(account);self_uid=str(client.config.get('DEDE_USER_ID',''))
         cfg=self.options.get('platforms',{}).get(self.id,{}).get('accounts',{}).get(account,{})
         actions=cfg.get('actions',{});streams=[]
-        if actions.get('reply'):
+        self.notification_due=getattr(self,'notification_due',{})
+        self.private_due=getattr(self,'private_due',{})
+        self.private_active=getattr(self,'private_active',{})
+        now=time.time();rules=cfg.get('reply',{})
+        if actions.get('reply') and now>=self.notification_due.get(account,0):
+            self.notification_due[account]=now+max(60,int(rules.get('poll_seconds',180)))
             for stream,endpoint in [('reply','reply'),('mention','at')]:
                 previous=cursor(stream);events=[];head=None
                 for page in range(1,4):
@@ -233,7 +264,9 @@ class Bilibili:
                     if boundary or len(rows)<20:break
                 latest=head or (previous or {}).get('latest','')
                 streams.append((stream,events,{**(previous or {}),'latest':latest}))
-        if actions.get('private_reply'):
+        if actions.get('private_reply') and now>=self.private_due.get(account,0):
+            active=now<self.private_active.get(account,0)
+            self.private_due[account]=now+max(30,int(rules.get('private_poll_seconds',60) if active else rules.get('private_idle_poll_seconds',300)))
             previous=cursor('private');sequences=dict((previous or {}).get('sessions',{}));events=[]
             raw,_=await client._http_get('https://api.vc.bilibili.com/session_svr/v1/session_svr/get_sessions',params={'session_type':1,'group_fold':1,'unfollow_fold':0,'sort_rule':2,'size':100,'build':0,'mobi_app':'web'})
             if raw.get('code')!=0:raise RuntimeError('private_sessions_unavailable')
@@ -249,23 +282,40 @@ class Bilibili:
                 for item in reversed(page.get('data',{}).get('messages',[])):
                     seq=int(item.get('msg_seqno') or 0);actor=str(item.get('sender_uid',''))
                     sequences[talker]=max(int(sequences[talker]),seq)
-                    if seq<=old or actor!=talker or actor==self_uid or int(item.get('msg_type',0))!=1:continue
+                    if seq<=old or actor!=talker or actor==self_uid or int(item.get('msg_type',0)) not in (1,2,7):continue
                     body=item.get('content','')
                     if isinstance(body,str):
                         try:body=json.loads(body)
                         except ValueError:continue
-                    if not isinstance(body,dict) or not isinstance(body.get('content'),str):continue
+                    if not isinstance(body,dict):continue
+                    image_urls=[]
+                    if int(item.get('msg_type',0))==2:
+                        from urllib.parse import urlsplit
+                        url=str(body.get('url',''));parts=urlsplit(url)
+                        if parts.scheme!='https' or not (parts.hostname or '').endswith('.hdslb.com') or parts.username or parts.password or parts.port not in (None,443):continue
+                        image_urls=[url];body={'content':'[对方发送了一张图片]'}
+                    if int(item.get('msg_type',0))==7:
+                        from .bili_supplement import video_id
+                        bv=video_id(str(body.get('bvid',''))+' '+str(body.get('url',''))+' '+str(body.get('content','')))
+                        if not bv and str(body.get('id','')).isdigit():
+                            card=await client._get_video_info(str(body['id']));bv=video_id((card or {}).get('bvid',''))
+                        if not bv:continue
+                        body={'content':'分享的视频：https://www.bilibili.com/video/'+bv}
+                    if not isinstance(body.get('content'),str):continue
                     event_id=talker+':'+str(item.get('msg_key') or seq)
                     created=float(item.get('timestamp') or 0)
                     if created>10_000_000_000:created/=1000
                     if created<float((previous or {}).get('started_at',0)):continue
                     events.append(Incoming(self.id,account,'private',event_id,actor,body['content'],created,
-                        {'receiver':talker,'reply_anchor':event_id},True,context={'legacy_event_id':str(item.get('msg_key') or seq)}))
+                        {'receiver':talker,'reply_anchor':event_id},True,context={'legacy_event_id':str(item.get('msg_key') or seq),'image_urls':image_urls}))
+            if events:
+                self.private_active[account]=now+max(60,int(rules.get('private_active_window',600)))
+                self.private_due[account]=now+max(30,int(rules.get('private_poll_seconds',60)))
             streams.append(('private',events,{'sessions':sequences,'started_at':(previous or {}).get('started_at',time.time())}))
         return streams
 
     async def reply_context(self,event):
-        if event.stream=='private':return {'text':'Private direct message; no public thread was attached.','images':[]}
+        if event.stream=='private':return await self.private_context(event)
         route=event.route
         if int(route.get('type',1))!=1:return {'text':event.source_text,'images':[],'warnings':['Non-video notification: video context is unavailable.']}
         oid=str(route.get('oid',''))
@@ -275,12 +325,12 @@ class Bilibili:
         subtitles=await client._get_video_subtitles(info.get('bvid',''),info.get('cid',0))
         comments=await client._get_hot_comments(oid,limit=5)
         visual=await self.visual(event.account,info,subtitles)
-        return {'text':json.dumps({'source_kind':('subtitle_and_sparse_frames' if subtitles else 'sparse_frames') if visual else ('video_subtitles_and_description' if subtitles else 'video_description_only'),
+        return {'text':json.dumps({'source_kind':(visual.get('modality') or ('subtitle_and_sparse_frames' if subtitles else 'sparse_frames')) if visual else ('video_subtitles_and_description' if subtitles else 'video_description_only'),
             'video_author':{'uid':str(info.get('owner_mid','')),'name':info.get('owner_name','')},
             'title':info.get('title',''),'description':str(info.get('desc',''))[:3000],
             'subtitles':str(subtitles)[:8000],'visual_observations':visual['text'] if visual else '', 'other_commenters':comments,
             'trigger_comment_id':route.get('parent',''),'root_comment_id':route.get('root',''),
-            'identity_rule':'The video author, trigger sender and other commenters are separate people. Refer only to the supplied subtitle/description and explicitly sampled frames if present. No audio or continuous viewing may be claimed.'},ensure_ascii=False),
+            'identity_rule':'The video author, trigger sender and other commenters are separate people. Refer only to supplied evidence. Sparse frames carry no audio. Direct-media observations may support audio only if explicitly marked audio_observed.'},ensure_ascii=False),
             'images':[],'warnings':[] if subtitles else ['No subtitles available; use description evidence only.']}
 
     async def close(self):self.clients.clear();self.qr.clear();self.visual_cache.clear()

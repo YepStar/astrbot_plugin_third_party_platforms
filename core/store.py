@@ -251,3 +251,22 @@ class Store:
         values={row['key'][len(prefix):] for row in rows if row['key'].startswith(prefix)}
         with self.connect() as db:values.update(row[0] for row in db.execute('SELECT external_id FROM read_content WHERE provider=? AND account=? AND at>=?',(provider,account,since)))
         return sorted(values)
+
+    def interests(self,provider,account,now,days=14):
+        scores={}
+        with self.connect() as db:
+            rows=db.execute('SELECT interests,score,at FROM observations WHERE provider=? AND account=? AND at>=? ORDER BY at DESC LIMIT 200',(provider,account,now-days*86400)).fetchall()
+        for row in rows:
+            if row['score']<6:continue
+            for tag in json.loads(row['interests']):
+                if not isinstance(tag,str) or not 1<=len(tag)<=80:continue
+                scores[tag]=scores.get(tag,0)+(row['score']-5)*2**(-max(0,now-row['at'])/(days*86400))
+        return [{'interest':tag,'weight':round(value,2)} for tag,value in sorted(scores.items(),key=lambda v:v[1],reverse=True)[:12]]
+
+    def activity_report(self,provider,account,start,end):
+        with self.connect() as db:
+            observations=db.execute('SELECT score,interests FROM observations WHERE provider=? AND account=? AND at>=? AND at<?',(provider,account,start,end)).fetchall()
+            rows=db.execute('SELECT kind,state,COUNT(*) AS count FROM actions WHERE provider=? AND account=? AND created>=? AND created<? GROUP BY kind,state',(provider,account,start,end)).fetchall()
+        return {'provider':provider,'account':account,'start':start,'end':end,'evaluated_count':len(observations),
+                'average_score':round(sum(x['score'] for x in observations)/len(observations),2) if observations else None,
+                'actions':[dict(row) for row in rows],'interests':self.interests(provider,account,end,max(1,(end-start)/86400))}

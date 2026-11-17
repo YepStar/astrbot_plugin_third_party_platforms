@@ -81,7 +81,7 @@ def build_config(b,x):
         xaccounts[pid]=account
     windows=list(dict.fromkeys((b.get('FIXED_PROACTIVE_WINDOWS') or ['10:00-11:00','20:00-21:00'])+(browse.get('windows') or [])))
     model=b.get('SCHEDULE_PLAN_PROVIDER_ID') or b.get('GENERATION_PROVIDER_ID') or b.get('LLM_PROVIDER_ID') or browse.get('provider_id','')
-    return {'enabled':False,'public_persona':b.get('CUSTOM_SYSTEM_PROMPT',''),'activity_level':b.get('AUTONOMOUS_ACTIVITY_LEVEL',55),
+    return {'model_circuit_threshold':max(1,min(20,int(b.get('LLM_CIRCUIT_FAILURE_THRESHOLD',3)))),'model_circuit_cooldown':max(30,min(3600,int(b.get('LLM_CIRCUIT_COOLDOWN_SECONDS',300)))),'enabled':False,'public_persona':b.get('CUSTOM_SYSTEM_PROMPT',''),'activity_level':b.get('AUTONOMOUS_ACTIVITY_LEVEL',55),
         'rest_windows':[clock_text(b.get('SLEEP_START','01:00'))+'-'+clock_text(b.get('SLEEP_END','08:00'))],
         'exploration_ratio':float(b.get('PROACTIVE_EXPLORATION_RATIO',.15)),
         'preference_half_life_days':b.get('PROACTIVE_PREFERENCE_HALF_LIFE_DAYS',14),
@@ -202,6 +202,56 @@ def apply(root,target,*,source_stopped=False,handover_started=None):
 
 # Additional UI/runtime settings introduced after the first comparison migration.
 BILI_ADDITIONAL={
+ 'mood_enabled':'ENABLE_MOOD',
+ 'activity_sync':'ENABLE_CROSS_PLATFORM_ACTIVITY_STATUS',
+ 'autonomous_dynamic_enabled':'ENABLE_DYNAMIC',
+ 'dynamic_times':'DYNAMIC_TIMES_COUNT',
+ 'dynamic_daily_count':'DYNAMIC_DAILY_COUNT',
+ 'dynamic_gap_days':'DYNAMIC_MIN_INTERVAL_DAYS',
+ 'dynamic_topics':'DYNAMIC_TOPICS',
+ 'dynamic_instruction':'CUSTOM_DYNAMIC_INSTRUCTION',
+ 'daily_summary_enabled':'ENABLE_DAILY_SUMMARY',
+ 'daily_summary_hour':'DAILY_SUMMARY_HOUR',
+ 'daily_summary_mode':'DAILY_SUMMARY_MODE',
+ 'daily_summary_umo':'DAILY_SUMMARY_QQ_UMO',
+ 'daily_summary_image':'DAILY_SUMMARY_RENDER_IMAGE',
+ 'daily_summary_instruction':'CUSTOM_DAILY_INSTRUCTION',
+ 'weekly_summary_enabled':'ENABLE_WEEKLY_SUMMARY',
+ 'weekly_summary_day':'WEEKLY_SUMMARY_DAY',
+ 'weekly_summary_mode':'WEEKLY_SUMMARY_MODE',
+ 'weekly_summary_umo':'WEEKLY_SUMMARY_QQ_UMO',
+ 'weekly_summary_image':'WEEKLY_SUMMARY_RENDER_IMAGE',
+ 'weekly_summary_instruction':'CUSTOM_WEEKLY_INSTRUCTION',
+ 'summary_font':'SUMMARY_CJK_FONT_PATH',
+ 'auto_block':'ENABLE_AUTO_BLOCK',
+ 'private_auto_block':'PRIVATE_MESSAGE_AUTO_BLOCK',
+ 'block_whitelist':'BLOCK_WHITELIST_UIDS',
+ 'private_block_whitelist':'PRIVATE_MESSAGE_BLOCK_WHITELIST_UIDS',
+ 'private_trusted_domains':'PRIVATE_MESSAGE_TRUSTED_DOMAINS',
+ 'block_score':'AUTO_BLOCK_SCORE',
+ 'block_negative_times':'AUTO_BLOCK_NEGATIVE_TIMES',
+ 'abuse_alert_mode':'ABUSE_ALERT_MODE',
+ 'abuse_alert_umo':'ABUSE_ALERT_QQ_UMO',
+ 'abuse_alert_threshold':'ABUSE_ALERT_SCORE_THRESHOLD',
+ 'video_direct_model':'VIDEO_VISION_MODEL',
+ 'video_direct_format':'VIDEO_VISION_FORMAT',
+ 'video_direct_fps':'VIDEO_VISION_FPS',
+ 'image_model':'IMAGE_VISION_PROVIDER_ID',
+ 'image_model_name':'IMAGE_VISION_MODEL',
+ 'tools_enabled':'ENABLE_LLM_TOOLS',
+ 'private_read_tools':'BILI_ALLOW_SEARCH_TOOLS',
+ 'private_tool_allowlist':'BILI_TOOL_ALLOWLIST',
+
+ 'cookie_auto_refresh':'COOKIE_AUTO_REFRESH','cookie_check_hours':'COOKIE_CHECK_INTERVAL',
+ 'private_auto_watch':'PRIVATE_MESSAGE_AUTO_WATCH_VIDEO','private_search_enabled':'PRIVATE_MESSAGE_BILI_SEARCH_ENABLED',
+ 'private_search_limit':'PRIVATE_MESSAGE_BILI_SEARCH_LIMIT','private_poll_seconds':'PRIVATE_MESSAGE_POLL_INTERVAL',
+ 'private_idle_poll_seconds':'PRIVATE_MESSAGE_IDLE_POLL_INTERVAL','private_active_window':'PRIVATE_MESSAGE_ACTIVE_WINDOW',
+ 'prefilter_enabled':'ENABLE_PROACTIVE_LLM_PREFILTER','prefilter_max_rejects':'PROACTIVE_LLM_PREFILTER_MAX_REJECTS',
+ 'interest_window_days':'PROACTIVE_TASTE_WINDOW_DAYS','search_query_instruction':'PROACTIVE_SEARCH_QUERY_PROMPT',
+ 'dynamic_watch_enabled':'ENABLE_DYNAMIC_WATCH','dynamic_daily_limit':'DYNAMIC_WATCH_DAILY_LIMIT',
+ 'dynamic_special_only':'DYNAMIC_WATCH_SPECIAL_ONLY','dynamic_include_video':'DYNAMIC_WATCH_INCLUDE_VIDEO_POSTS',
+ 'video_segment_minutes':'VIDEO_SEGMENT_MINUTES','video_segment_max_count':'VIDEO_SEGMENT_MAX_COUNT',
+
  'browse_enabled':'ENABLE_PROACTIVE','browse_count':'PROACTIVE_VIDEO_COUNT','video_daily_limit':'PROACTIVE_DAILY_LIMIT',
  'custom_reply_instruction':'CUSTOM_REPLY_INSTRUCTION','custom_private_instruction':'CUSTOM_PRIVATE_MESSAGE_INSTRUCTION',
  'custom_proactive_instruction':'CUSTOM_PROACTIVE_INSTRUCTION','custom_recommend_instruction':'CUSTOM_RECOMMEND_INSTRUCTION',
@@ -214,4 +264,12 @@ BILI_ADDITIONAL={
  'coin_min_score':'PROACTIVE_COIN_MIN_SCORE','favorite_enabled':'PROACTIVE_FAV','favorite_min_score':'PROACTIVE_FAV_MIN_SCORE',
  'follow_enabled':'PROACTIVE_FOLLOW','follow_min_score':'PROACTIVE_FOLLOW_MIN_SCORE'}
 def additional_bili_settings(legacy):
-    return {key:legacy[source] for key,source in BILI_ADDITIONAL.items() if source in legacy}
+    result={key:legacy[source] for key,source in BILI_ADDITIONAL.items() if source in legacy}
+    # Legacy ranges were wider; retain intent within the supported bounded pipeline.
+    ranges={'cookie_check_hours':(1,24),'private_search_limit':(1,3),'private_poll_seconds':(30,3600),
+            'private_idle_poll_seconds':(60,3600),'private_active_window':(60,3600),
+            'prefilter_max_rejects':(0,10),'interest_window_days':(1,90),'dynamic_daily_limit':(0,30),
+            'video_segment_minutes':(0,60),'video_segment_max_count':(1,6)}
+    for key,(low,high) in ranges.items():
+        if key in result:result[key]=max(low,min(high,int(result[key])))
+    return result

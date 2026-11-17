@@ -1,0 +1,292 @@
+{
+  "mood_enabled": [
+    "life",
+    "bool",
+    false,
+    null,
+    null
+  ],
+  "activity_sync": [
+    "life",
+    "bool",
+    false,
+    null,
+    null
+  ],
+  "autonomous_dynamic_enabled": [
+    "life",
+    "bool",
+    false,
+    null,
+    null
+  ],
+  "dynamic_times": [
+    "life",
+    "int",
+    1,
+    0,
+    12
+  ],
+  "dynamic_gap_days": [
+    "life",
+    "int",
+    1,
+    1,
+    30
+  ],
+  "dynamic_topics": [
+    "life",
+    "list",
+    [],
+    null,
+    null
+  ],
+  "dynamic_instruction": [
+    "life",
+    "text",
+    "",
+    0,
+    4000
+  ],
+  "daily_summary_enabled": [
+    "life",
+    "bool",
+    false,
+    null,
+    null
+  ],
+  "daily_summary_hour": [
+    "life",
+    "int",
+    22,
+    0,
+    23
+  ],
+  "daily_summary_mode": [
+    "life",
+    "text",
+    "archive",
+    0,
+    20
+  ],
+  "daily_summary_umo": [
+    "life",
+    "text",
+    "",
+    0,
+    200
+  ],
+  "daily_summary_image": [
+    "life",
+    "bool",
+    false,
+    null,
+    null
+  ],
+  "daily_summary_instruction": [
+    "life",
+    "text",
+    "",
+    0,
+    4000
+  ],
+  "weekly_summary_enabled": [
+    "life",
+    "bool",
+    false,
+    null,
+    null
+  ],
+  "weekly_summary_day": [
+    "life",
+    "int",
+    6,
+    0,
+    6
+  ],
+  "weekly_summary_mode": [
+    "life",
+    "text",
+    "archive",
+    0,
+    20
+  ],
+  "weekly_summary_umo": [
+    "life",
+    "text",
+    "",
+    0,
+    200
+  ],
+  "weekly_summary_image": [
+    "life",
+    "bool",
+    false,
+    null,
+    null
+  ],
+  "weekly_summary_instruction": [
+    "life",
+    "text",
+    "",
+    0,
+    4000
+  ],
+  "summary_font": [
+    "life",
+    "text",
+    "",
+    0,
+    500
+  ],
+  "auto_block": [
+    "safety",
+    "bool",
+    false,
+    null,
+    null
+  ],
+  "private_auto_block": [
+    "safety",
+    "bool",
+    false,
+    null,
+    null
+  ],
+  "block_whitelist": [
+    "safety",
+    "list",
+    [],
+    null,
+    null
+  ],
+  "private_block_whitelist": [
+    "safety",
+    "list",
+    [],
+    null,
+    null
+  ],
+  "private_trusted_domains": [
+    "safety",
+    "list",
+    [
+      "bilibili.com",
+      "b23.tv"
+    ],
+    null,
+    null
+  ],
+  "block_score": [
+    "safety",
+    "int",
+    -30,
+    -1000,
+    -1
+  ],
+  "block_negative_times": [
+    "safety",
+    "int",
+    5,
+    0,
+    100
+  ],
+  "abuse_alert_mode": [
+    "safety",
+    "text",
+    "off",
+    0,
+    10
+  ],
+  "abuse_alert_umo": [
+    "safety",
+    "text",
+    "",
+    0,
+    200
+  ],
+  "abuse_alert_threshold": [
+    "safety",
+    "int",
+    -3,
+    -5,
+    -1
+  ],
+  "video_direct_provider": [
+    "models",
+    "text",
+    "",
+    0,
+    200
+  ],
+  "video_direct_model": [
+    "vision",
+    "text",
+    "",
+    0,
+    200
+  ],
+  "video_direct_format": [
+    "vision",
+    "text",
+    "none",
+    0,
+    10
+  ],
+  "video_direct_fps": [
+    "vision",
+    "int",
+    2,
+    1,
+    4
+  ],
+  "image_model": [
+    "models",
+    "text",
+    "",
+    0,
+    200
+  ],
+  "image_model_name": [
+    "vision",
+    "text",
+    "",
+    0,
+    200
+  ],
+  "private_image_enabled": [
+    "vision",
+    "bool",
+    false,
+    null,
+    null
+  ],
+  "tools_enabled": [
+    "life",
+    "bool",
+    true,
+    null,
+    null
+  ],
+  "private_read_tools": [
+    "reply",
+    "bool",
+    true,
+    null,
+    null
+  ],
+  "private_tool_allowlist": [
+    "reply",
+    "list",
+    [
+      "bili_up_info",
+      "bili_video_search",
+      "bili_search_and_watch",
+      "get_up_info",
+      "search_bilibili",
+      "watch_video"
+    ],
+    null,
+    null
+  ]
+}
